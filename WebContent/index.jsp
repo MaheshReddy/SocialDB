@@ -5,22 +5,27 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>My Social</title>
+<%@ include file="title.jsp"  %>
+<%@ page import="javax.servlet.RequestDispatcher" %>
 </head>
+<script type="text/javascript">
+
+</script>
 <body>
-<% String status = "Welcome To DB Project";
-	if(request.getAttribute("Status") != null)
-		status = request.getAttribute("Status").toString();%>
-<%=status%>
 <br>
-Login Page, Please enter your details to login.
-<form method="post" action="Login?pageid=1"> 
-<p>Username <input type="text" name="username">
-<br>Password
+<br>
+<br>
+<h1>Login Page, Please enter your details to login.</h1>
+<table>
+<tr>
+<td>
+<form method="post" action="Login?pageid=1">
+Email <input type="text" name="username"> &nbsp;&nbsp;&nbsp; Password
 <input type="password" name="password"><br>
 <p><input type="submit" name="Submit" value="Submit">
 <input type="reset" value="Reset"></p> </form>
-<br>
-<form method="post" action="register.jsp">
-<p>New user please register<input type="submit" name="Register" value="Register"></p></form>>
+</td>
+</tr>
+</table>
 </body>
 </html>

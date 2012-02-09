@@ -12,15 +12,22 @@
 <title>Home Page</title>
 </head>
 <body>
+<%@ include file="title.jsp"  %>
+<br>
+<br>
 You Have successfully logged in. This is your home page.
-<% DBManager dbmgr = new DBManager();  
+<%String fname,lname,sex,addr,city,state,zip,pref,tele,dob,email;
+fname=lname=sex=addr=city=state=zip=pref=tele=dob=email=null;
+if(request.getAttribute("user")!=null)
+{
+{
+   DBManager dbmgr = new DBManager();  
    dbmgr.connect();
    Connection con = dbmgr.getConnection();
    Statement stmt = con.createStatement();
    String user = request.getAttribute("user").toString();
-   ResultSet rstset = dbmgr.executeQuery("select * from cseteam51.userinfo where id='"+user+"'");
-   String fname,lname,sex,addr,city,state,zip,pref,tele,dob,email;
-   fname=lname=sex=addr=city=state=zip=pref=tele=dob=email=null;
+   ResultSet rstset = dbmgr.executeQuery("select * from cseteam51.userinfo where emailid='"+user+"'");
+   
    //rstset.next();
    if(rstset.next())
    {
@@ -42,7 +49,12 @@ You Have successfully logged in. This is your home page.
 	   PrintWriter wrt = response.getWriter();
 	   wrt.print("Error retriving the value");
    }
-	   
+}  
+}
+else
+{
+	response.sendRedirect("index.jsp");
+}
 %>
 <br>
 Name <%= fname+" "+lname %>

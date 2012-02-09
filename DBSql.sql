@@ -18,7 +18,11 @@
 --Telephone varchar(15) NOT NULL,
 --Preferences varchar(200) NOT NULL
 --)
+
+--select * from CSETEAM51.USERPASSWD
+--select * from cseteam51.userinfo where id='maheshe'
 --delete from USERINFO;
 --delete from CSETEAM51.USERPASSWD;
---select * from CSETEAM51.USERPASSWD
-select * from cseteam51.userinfo where id='maheshe'
+--drop table cseteam51.userinfo;
+
+select * from cseteam51.userinfo where id='mahesh961@gmail.com'

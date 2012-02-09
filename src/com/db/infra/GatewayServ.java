@@ -12,6 +12,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -70,6 +71,10 @@ public class GatewayServ extends HttpServlet {
 			if(resultSet.getString(1).equals(request.getParameter("password")))
 			{
 				request.setAttribute("user", request.getParameter("username"));
+				Cookie loggedCookie = new Cookie("loggedIn","true");
+				Cookie user = new Cookie("user",request.getParameter("username"));
+				response.addCookie(loggedCookie);
+				response.addCookie(user);
 				redirect(request,response,"OK","Home.jsp");
 			}
 			else
@@ -132,7 +137,7 @@ public class GatewayServ extends HttpServlet {
 			
 			prpStmt = dbmgr.getConnection().prepareStatement("insert into cseteam51.userpasswd" +
 					"(userid,passwd) values (?,?)");
-			prpStmt.setString(1, request.getParameter("userid"));
+			prpStmt.setString(1, request.getParameter("emailid"));
 			prpStmt.setString(2, request.getParameter("passwd"));
 			System.out.println(prpStmt.toString());
 			prpStmt.execute();
