@@ -12,11 +12,15 @@ drop table cseteam51.post;
 drop table cseteam51.comment;
 drop table cseteam51.message;
 drop table cseteam51.msgReciever;
+drop table cseteam51.advt;
+drop table cseteam51.sale;
+drop table cseteam51.friendRequest;
+drop table cseteam51.friend;
 
 create TABLE cseteam51.userinfo(
 ID  varchar(20) PRIMARY KEY NOT NULL, 
-FirstName varchar(20) NOT NULL,
-LastName varchar(20) NOT NULL,
+fName varchar(20) NOT NULL,
+lName varchar(20) NOT NULL,
 Sex char(2) NOT NULL,
 EmailID varchar(40) NOT NULL,
 DOB date NOT NULL, 
@@ -42,6 +46,22 @@ userid varchar(20) NOT NULL,
 preference varchar(15) NOT NULL,
 PRIMARY KEY(userid,preference),
 foreign key(userid) references cseteam51.userinfo(ID)
+);
+
+create table cseteam51.friendRequest(
+fromUsrId varchar(20) NOT NULL,
+toUsrId varchar(20) NOT NULL,
+primary key(fromUsrId,toUsrId),
+foreign key(fromUsrID) references cseteam51.userinfo(id),
+foreign key(toUsrID) references cseteam51.userinfo(id)
+);
+
+create table cseteam51.friend(
+usrid1 varchar(20) NOT NULL,
+usrid2 varchar(20) NOT NULL,
+primary key(usrid1,usrid2),
+foreign key(usrid1) references cseteam51.userinfo(id),
+foreign key(usrid2) references cseteam51.userinfo(id)
 );
 
 create table cseteam51.circle(
@@ -139,7 +159,29 @@ mesgId varchar(20) NOT NULL,
 recvId varchar(20) NOT NULL,
 primary key(mesgid,recvid),
 foreign key(mesgid) references cseteam51.message,
-foreign key(recid) references cseteam51.userinfo(id)
+foreign key(recvid) references cseteam51.userinfo(id)
+);
+
+create table cseteam51.advt (
+advtId varchar(20) NOT NULL,
+type varchar(20) NOT NULL,
+advtDate date NOT NULL,
+company varchar(20) NOT NULL,
+itemName varchar(20) NOT NULL,
+unitPrice float not null,
+noUnits integer not null,
+primary key (advtId)
+);
+
+create table cseteam51.sale (
+transId varchar(20) NOT NULL,
+saleDate date NOT NULL,
+advtId varchar(20) NOT NULL,
+noUnits integer not null,
+userId varchar(20) not null,
+primary key(transid),
+foreign key(advtId) references cseteam51.advt,
+foreign key(userId) references cseteam51.userinfo(id)
 );
 
 
@@ -217,8 +259,20 @@ insert into cseteam51.post values ('20112','2012-10-11','17:00','EST','GO Seawol
 
 insert into cseteam51.comment values ('900001','2012-10-10','17:01','EST','Its beautiful! :)','100100101','20111');
 insert into cseteam51.comment values ('900002','2012-10-10','17:02','EST','Natures white blanket :D','100100106','20111');
+
 insert into cseteam51.message values ('3001','2012-10-10','CSE532','Do u have assignent 1 questions?','100100101');
 insert into cseteam51.message values ('3002','2012-10-10','re: CSE532','nope. I think patrick has them.','100100102');
 insert into cseteam51.msgReciever values ('3001','100100102');
 insert into cseteam51.msgReciever values ('3001','100100103');
 insert into cseteam51.msgReciever values ('3002','100100101');
+insert into cseteam51.msgReciever values ('3001','100100101');
+insert into cseteam51.msgReciever values ('3002','100100102');
+
+insert into cseteam51.advt values ('33331','car','2012-04-10','ford','2012-Mustang','22000','30');
+insert into cseteam51.advt values ('33332','clothing','2012-04-10','GAP','Superman Shirt','5','100');
+insert into cseteam51.advt values ('33333','car','2012-04-10','ford','2011-Mustang','32000','20');
+
+insert into cseteam51.sale values ('200010001','2012-04-22','33331','2','100100101');
+insert into cseteam51.sale values ('200010002','2012-04-22','33332','2','100100101');
+insert into cseteam51.sale values ('200010004','2012-04-22','33333','1','100100101');
+insert into cseteam51.sale values ('200010005','2012-04-22','33331','2','100100102');
