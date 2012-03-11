@@ -8,16 +8,11 @@
 <title>Registration Page</title>
 </head>
 <body>
-<% String status1 = "Welcome to Registration Page";
-   if (request.getAttribute("Status")!=null)
-   		status1 = request.getAttribute("Status").toString();%>
- <%=status1 %>
  <br>
 
-<form action="Login?pageid=2" method=post>
+<form action="Login?requestId=register" method=post>
 
 <table cellpadding=4 cellspacing=2 border=0>
-<th bgcolor="#58ACFA" colspan=2>
 <font size=5>REGISTRATION</font>
 <br><font size=1><sup></sup></font><hr>
 </th>

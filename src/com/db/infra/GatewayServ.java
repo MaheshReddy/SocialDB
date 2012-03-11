@@ -6,7 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
@@ -43,11 +45,48 @@ public class GatewayServ extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		if(request.getParameter("pageid").equals("1"))
+		if(request.getParameter("requestId").equals("login"))
 			handleLogin(request, response);
-		else if (request.getParameter("pageid").equals("2"))
+		else if (request.getParameter("requestId").equals("register"))
 			handleRegistration(response, request);
+		else if(request.getParameter("requestId").equals("logoff"))
+			handleLogOff(request,response);
 		// TODO Auto-generated method stub
+	}
+	
+	private void handleLogOff(HttpServletRequest request,HttpServletResponse response){
+		
+		if(request.getParameter("isLoggedIn").equals("true")){
+			Cookie [] cookie = request.getCookies();
+			for(int i=0;i<cookie.length;i++){
+				if(cookie[i].getName().equals("userId")){
+					cookie[i].setMaxAge(0);
+					response.addCookie(cookie[i]);
+				}
+			}
+			//response.addCookie(new Cookie("userId",""));
+			//TODO do the cleaning up operation on server side.
+			try {
+				redirect(request,response,"Logged Off","index.jsp");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ServletException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		else{
+			try {
+				redirect(request,response,"Log In","index.jsp");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ServletException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	private void handleLogin(HttpServletRequest request,HttpServletResponse response) throws IOException
 	{
@@ -61,9 +100,9 @@ public class GatewayServ extends HttpServlet {
 			//ResultSet resultSet = dbmgr.executeQuery("select passwd from cseteam51.userpasswd " +
 												   //" where userid ="+request.getParameter("username")+"'");
 				//									"where userid =?");
-			PreparedStatement prpStmt = dbmgr.getConnection().prepareStatement("select passwd from cseteam51.userpasswd " +
+			PreparedStatement prpStmt = dbmgr.getConnection().prepareStatement("select passwd,userid from cseteam51.userpasswd " +
 					   //" where userid ="+request.getParameter("username")+"'");
-											"where userid =?");
+											"where email =?");
 			prpStmt.setString(1, request.getParameter("username"));
 			ResultSet resultSet = prpStmt.executeQuery();
 			if(resultSet.next())
@@ -71,10 +110,11 @@ public class GatewayServ extends HttpServlet {
 			if(resultSet.getString(1).equals(request.getParameter("password")))
 			{
 				request.setAttribute("user", request.getParameter("username"));
-				Cookie loggedCookie = new Cookie("loggedIn","true");
-				Cookie user = new Cookie("user",request.getParameter("username"));
-				response.addCookie(loggedCookie);
+				//Cookie user = new Cookie("user",request.getParameter("username"));
+				Cookie user = new Cookie("userId",resultSet.getString(2));
+				System.out.println(resultSet.getString(2));
 				response.addCookie(user);
+				request.setAttribute("userId", resultSet.getString(2));
 				redirect(request,response,"OK","Home.jsp");
 			}
 			else
@@ -115,8 +155,8 @@ public class GatewayServ extends HttpServlet {
 		try {
 			dbmgr.connect();
 			PreparedStatement prpStmt = dbmgr.getConnection().prepareStatement("insert into cseteam51.userinfo" +
-					"(id,firstname,lastname,sex,emailid,dob,address,city,state,zipcode,telephone,preferences)" +
-					"values  (?,?,?,?,?,?,?,?,?,?,?,?)");
+					"(id,fname,lname,sex,emailid,dob,address,city,state,zipcode,telephone)" +
+					"values  (?,?,?,?,?,?,?,?,?,?,?)");
 			prpStmt.setString(2,request.getParameter("fname"));
 			prpStmt.setString(1,request.getParameter("userid"));
 			prpStmt.setString(3,request.getParameter("lname"));
@@ -131,14 +171,14 @@ public class GatewayServ extends HttpServlet {
 			prpStmt.setString(9,request.getParameter("state"));
 			prpStmt.setString(10,request.getParameter("zip"));
 			prpStmt.setString(11,request.getParameter("tele"));
-			prpStmt.setString(12, request.getParameter("pref"));
 			//System.out.println("Mahesh"+prpStmt.);
 			prpStmt.execute();
 			
 			prpStmt = dbmgr.getConnection().prepareStatement("insert into cseteam51.userpasswd" +
-					"(userid,passwd) values (?,?)");
-			prpStmt.setString(1, request.getParameter("emailid"));
+					"(userid,passwd,email) values (?,?,?)");
+			prpStmt.setString(1, request.getParameter("userid"));
 			prpStmt.setString(2, request.getParameter("passwd"));
+			prpStmt.setString(3, request.getParameter("emailid"));
 			System.out.println(prpStmt.toString());
 			prpStmt.execute();
 			dbmgr.disconnect();
@@ -167,7 +207,7 @@ public class GatewayServ extends HttpServlet {
 			redirect(request,response,"SQL Exception: Please choose a different userid","register.jsp");
 		}
 		
-		//ID Firstname Last Name Sex EmailID DOB Address City State Zip Code Telephone Preferences
+		//ID fname Last Name Sex EmailID DOB Address City State Zip Code Telephone Preferences
 	}
 }
 

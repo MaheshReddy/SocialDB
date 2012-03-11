@@ -42,12 +42,20 @@ public class DBManager {
 	}
 	public ResultSet executeQuery(String query) throws SQLException
 	{
-		// Create a statement 
-		System.out.println("Executing query:"+query);
-		Statement statement = getConnection().createStatement();
-		// Execute a statement 
-		ResultSet resultSet = statement.executeQuery(query);
-		// Iterate through the result and print the student names
+		// Create a statement
+		ResultSet resultSet = null;
+		try {
+			connect();
+			System.out.println("Executing query:"+query);
+			Statement statement = getConnection().createStatement();
+			// Execute a statement 
+			resultSet = statement.executeQuery(query);
+			// Iterate through the result and print the student names
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		
 		return resultSet;
 	}

@@ -3,14 +3,44 @@
     pageEncoding="ISO-8859-1"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
+
+
+<script type="text/javascript" src="js/bootstrap.js">
+    var externalScriptLoaded = false;
+</script> 
+<script type="text/javascript" src="js/bootstrap.min.js">
+    var externalScriptLoaded = false;
+</script> 
+<STYLE TYPE="text/css" MEDIA="screen, projection">
+<!--
+  @import url(css/bootstrap.css);
+  @import url(css/bootstrap.min.css);
+  @import url(css/bootstrap-responsive.css);
+  @import url(css/bootstrap-responsive.min.css);
+  DT { background: yellow; color: black }
+-->
+</STYLE>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Title Page</title>
 </head>
-<body onload="logOffButton()">
+
+<body onload="setLoggedIn(), logOffButton()">
 <script type="text/javascript">
 <!-- Function to get the parameter value -->
 var isLoggedIn;
+
+function setLoggedIn(){
+	var str =  readCookie("userId");
+	//document.writeln(str);
+	if(str == null){
+	isLoggedIn = false;
+	}
+	else{
+	isLoggedIn=true;
+	}
+}
+
 function getQueryParameter ( parameterName ) {
 	  var queryString = window.top.location.search.substring(1);
 	  var parameterName = parameterName + "=";
@@ -55,49 +85,63 @@ function eraseCookie(name) {
 }
 
 
-function logAction(isLoggedIn){
-	if(isLoggedIn == "true")
-	{
-		//eraseCookie("loggedIn");
-	document.cookie = "loggedIn=false;;";
-	window.location="index.jsp";
-	}
-	else{
-	var url = document.URL;
-	var isIndex = url.match("index.jsp");
-	if(isIndex == null )
-		window.location="index.jsp";
-	}
-	return
+function logAction(){
+	var form = document.createElement("form");
+	hiddenForm = document.createElement("input");
+	hiddenForm.setAttribute("name", "isLoggedIn");
+	hiddenForm.setAttribute("value", isLoggedIn);
+	hiddenForm.setAttribute("type", "hidden");
+	
+	hiddenForm1 = document.createElement("input");
+	hiddenForm1.setAttribute("name", "requestId");
+	hiddenForm1.setAttribute("value", "logoff");
+	hiddenForm1.setAttribute("type", "hidden");
+	
+	form.setAttribute("action", "Login");
+	form.appendChild(hiddenForm);
+	form.appendChild(hiddenForm1);
+	document.body.appendChild(form);
+	form.submit();
 }
 function logOffButton(){
+	//document.write(isLoggedIn);	
 	myPara = document.getElementById("paraID");
 	myButton = document.createElement("BUTTON");
-	//var isLoggedIn =  getQueryParameter("loggedIn");
-	isLoggedIn = readCookie("loggedIn");
-	if(isLoggedIn == "true"){
-	text = document.createTextNode("LogOff");
+	var str =  readCookie("userId");
+	//document.writeln(str);
+	if(str == null){
+	text = document.createTextNode("LogIn");
+	isLoggedIn = false;
 	}
 	else{
-	text = document.createTextNode("LogIn");
+	text = document.createTextNode("LogOff");
+	isLoggedIn=true;
 	}
 	myButton.appendChild(text);
 	//myButton.onclick = logAction(isLoggedIn);
 	myPara.appendChild(myButton);
 }
+function registerButton(){
+	rgrPara = document.getElementById("register");
+	rgrButton= document.createElement("BUTTON");
+	text = document.createTextNode("Register");
+	rgrButton.appendChild(text);
+	rgrPara.appendChild(rgrButton);
+}
 
+function register(){
+	window.location = "register.jsp";
+}
 </script>
 
 <% String status = "Welcome To DB Project";
 		%>
 <table>
 <tr >
-<td align="left" width="1000000000"> <%=status %></td>
+<td align="left" width="1000000000"></td>
 <td> &nbsp;</td>
-<td align="left"><br>
-<form method="post" action="register.jsp">
-<input type="submit" name="Register" value="Register"></p></form> </td>
-<td align="justify"> <p id="paraID" onclick="logAction(isLoggedIn)"> &nbsp; </p> </td>
+<td align="justify"> <p id="register" onclick="register()"> &nbsp; </p> </td>
+<td align="justify"> <p id="paraID" onclick="logAction()"> &nbsp; </p> </td>
 </tr>
 </table>
 </body>

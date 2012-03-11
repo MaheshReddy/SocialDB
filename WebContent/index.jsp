@@ -8,24 +8,37 @@
 <%@ include file="title.jsp"  %>
 <%@ page import="javax.servlet.RequestDispatcher" %>
 </head>
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" type="text/css" href="css/style.css" />
 <script type="text/javascript">
 
 </script>
 <body>
-<br>
-<br>
-<br>
-<h1>Login Page, Please enter your details to login.</h1>
-<table>
-<tr>
-<td>
-<form method="post" action="Login?pageid=1">
-Email <input type="text" name="username"> &nbsp;&nbsp;&nbsp; Password
-<input type="password" name="password"><br>
-<p><input type="submit" name="Submit" value="Submit">
-<input type="reset" value="Reset"></p> </form>
-</td>
-</tr>
-</table>
+
+<form id="login-form" action="Login?requestId=login" method="post">
+		<fieldset>
+		
+			<legend>Log in</legend>
+			
+			<label for="login">Email</label>
+			<input type="text" id="login" name="username"/>
+			<div class="clear"></div>
+			
+			<label for="password">Password</label>
+			<input type="password" id="password" name="password"/>
+			<div class="clear"></div>
+			
+			<label for="remember_me" style="padding: 0;">Remember me?</label>
+			<input type="checkbox" id="remember_me" style="position: relative; top: 3px; margin: 0; " name="remember_me"/>
+			<div class="clear"></div>
+			
+			<br />
+			
+			<input type="submit" style="margin: -30px 0 0 187px;" class="button" name="commit" value="Log in"/>
+			<button class="btn" onclick="window.open('register.jsp')" style="margin: -50px 0 0 277px;">
+			<a href="register.jsp">Register</button>	
+		</fieldset>
+	</form>
+	
 </body>
 </html>
