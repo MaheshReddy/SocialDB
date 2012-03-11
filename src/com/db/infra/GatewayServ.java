@@ -27,7 +27,8 @@ import com.db.jdbc.DBManager;
 @WebServlet(description = "Validates the user", urlPatterns = { "/Login" })
 public class GatewayServ extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-       
+    
+	private DBManager dbmgr = new DBManager();
     /**
      * @see HttpServlet#HttpServlet()
      */
@@ -45,15 +46,126 @@ public class GatewayServ extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		if(request.getParameter("requestId").equals("login"))
+		String requestId = request.getParameter("requestId"); 
+		if(requestId.equals("login"))
 			handleLogin(request, response);
-		else if (request.getParameter("requestId").equals("register"))
+		else if (requestId.equals("register"))
 			handleRegistration(response, request);
-		else if(request.getParameter("requestId").equals("logoff"))
+		else if(requestId.equals("logoff"))
 			handleLogOff(request,response);
+		else if(requestId.equals("wallpost"))
+			handleWallPost(request,response);
+		else if(requestId.equals("profileLd"))
+			handleProfileLoad(request,response);
+		else if(requestId.equals("commPost"))
+			handleCommentPost(request,response);
 		// TODO Auto-generated method stub
 	}
 	
+	private void handleCommentPost(HttpServletRequest request,HttpServletResponse response){
+	
+		System.out.println(request.getParameter("userid"));
+		System.out.println(request.getParameter("postid"));
+		String userId = request.getParameter("userid");
+		String postId = request.getParameter("postid");
+		Long commId = getNextId("comment", "commentId");
+		String status = null;
+		try {
+			dbmgr.executeQuery("insert into cseteam51.comment " +
+					"values ('"+commId+"','2012-10-10','17:01','EST','"+request.getParameter("commPost")
+					+"','"+userId+"','"+postId+"')");
+			status = "OK";
+			dbmgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			status ="SQL Exception";
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, status, "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	private void handleProfileLoad(HttpServletRequest request,HttpServletResponse response){
+		System.out.println("mahesh"+request.getParameter("userId"));
+		try {
+			redirect(request, response, "ok", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	private void handleWallPost(HttpServletRequest request,HttpServletResponse response){
+		System.out.println("got a wall post");
+		String userId = getCurrentUser(request);
+		String targetUsrId = request.getParameter("userid");
+		System.out.println(userId);
+		System.out.println(targetUsrId);
+		String pageId = null;
+		String status=null;
+		try {
+			ResultSet rslSet = dbmgr.executeQuery("select pageId from userpage where userid='"+targetUsrId+"'");
+			if(rslSet.next()){
+				pageId = rslSet.getString("pageid");
+				long postId = getNextId("post","postid");
+				rslSet = dbmgr.executeQuery("insert into cseteam51.post " +
+						"values ('"+Long.toString(postId)+"','2012-10-11','17:00','EST','"+request.getParameter("wallpost")+"','"+userId+"','"+pageId+"')");
+				status="OK";
+				dbmgr.disconnect();
+			}
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			status ="DB Error";
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, status, "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private long getNextId(String table,String columm){
+		String nextId = null;
+		try {
+			ResultSet rslSet = dbmgr.executeQuery("select max("+columm+") from "+table);
+			if(rslSet.next())
+				nextId = rslSet.getString(1);
+			dbmgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(nextId!=null)
+			return Long.parseLong(nextId) +1;
+		else
+		return 0;
+	}
+	private String getCurrentUser(HttpServletRequest request){
+		String userId = null;
+		Cookie [] cookie = request.getCookies();
+		for(int i=0;i<cookie.length;i++){
+			if(cookie[i].getName().equals("userId")){
+				userId = new String(cookie[i].getValue());
+			}
+		}
+		return userId;
+	}
 	private void handleLogOff(HttpServletRequest request,HttpServletResponse response){
 		
 		if(request.getParameter("isLoggedIn").equals("true")){
@@ -94,7 +206,6 @@ public class GatewayServ extends HttpServlet {
 		PrintWriter out = response.getWriter();
 		System.out.println("Username:"+ request.getParameter("username")
 			+" Password:"+request.getParameter("password"));
-		DBManager dbmgr = new DBManager();
 		try {
 			dbmgr.connect();
 			//ResultSet resultSet = dbmgr.executeQuery("select passwd from cseteam51.userpasswd " +
@@ -148,48 +259,46 @@ public class GatewayServ extends HttpServlet {
 	
 	private void handleRegistration(HttpServletResponse response,HttpServletRequest request) throws IOException, ServletException
 	{
+		try {
 		if(!request.getParameter("passwd").equals(request.getParameter("passwd2")))
 			redirect(request,response,"Password Mismatch","index.jsp");
 		
-		DBManager dbmgr = new DBManager();
-		try {
-			dbmgr.connect();
-			PreparedStatement prpStmt = dbmgr.getConnection().prepareStatement("insert into cseteam51.userinfo" +
+		
+		
+			String query = ("insert into cseteam51.userinfo" +
 					"(id,fname,lname,sex,emailid,dob,address,city,state,zipcode,telephone)" +
-					"values  (?,?,?,?,?,?,?,?,?,?,?)");
-			prpStmt.setString(2,request.getParameter("fname"));
-			prpStmt.setString(1,request.getParameter("userid"));
-			prpStmt.setString(3,request.getParameter("lname"));
-			//prpStmt.setString(, request.getParameter("passwd"));
-			//prpStmt.setString(2,request.getParameter("passwd2"));
-			prpStmt.setString(4,request.getParameter("sex"));
-			prpStmt.setString(5, request.getParameter("emailid"));
-			System.out.println(java.sql.Date.valueOf(request.getParameter("dob")));
-			prpStmt.setDate(6,java.sql.Date.valueOf(request.getParameter("dob")));
-			prpStmt.setString(7,request.getParameter("addr"));
-			prpStmt.setString(8,request.getParameter("city"));
-			prpStmt.setString(9,request.getParameter("state"));
-			prpStmt.setString(10,request.getParameter("zip"));
-			prpStmt.setString(11,request.getParameter("tele"));
-			//System.out.println("Mahesh"+prpStmt.);
-			prpStmt.execute();
+					"values (");
+			long userId = getNextId("userinfo","id");
+			query = query +"'" +Long.toString(userId)+"',";
+			query = query +"'"+ request.getParameter("fname")+"',";
+			query = query +"'"+ request.getParameter("lname")+"',";
+			query = query +"'"+ request.getParameter("sex")+"',";
+			query = query +"'" +request.getParameter("emailid")+"',";
+			query = query +"'" +java.sql.Date.valueOf(request.getParameter("dob"))+"',";
+			query = query+"'" +request.getParameter("addr")+"',";
+			query = query +"'" + request.getParameter("city")+"',";
+			query = query +"'" + request.getParameter("state")+"',";
+			query = query +"'" + request.getParameter("zip")+"',";
+			query = query +"'" + request.getParameter("tele")+"')";
+			dbmgr.executeQuery(query);
+			dbmgr.disconnect();
 			
-			prpStmt = dbmgr.getConnection().prepareStatement("insert into cseteam51.userpasswd" +
-					"(userid,passwd,email) values (?,?,?)");
-			prpStmt.setString(1, request.getParameter("userid"));
-			prpStmt.setString(2, request.getParameter("passwd"));
-			prpStmt.setString(3, request.getParameter("emailid"));
-			System.out.println(prpStmt.toString());
-			prpStmt.execute();
+			query = ("insert into cseteam51.userpasswd" +
+					"(userid,passwd,email) values ('");
+			query = query +Long.toString(userId)+"','";
+			query = query + request.getParameter("passwd")+"','";
+			query = query +  request.getParameter("emailid")+"')";
+			dbmgr.executeQuery(query);
+			dbmgr.disconnect();
+			
+			long wallId = getNextId("page", "pageid");
+			dbmgr.executeQuery("insert into cseteam51.page values ('"+wallId+"')");
+			dbmgr.executeQuery("insert into cseteam51.userpage values ('"+wallId+"','"+userId+"')");
 			dbmgr.disconnect();
 			System.out.println("Registratoin Done");
 			redirect(request, response, "Registration Succesfull", "index.jsp");
 			//response.sendRedirect("index.jsp");
 
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			redirect(request,response,"Class Not Found Error","register.jsp");
-			e.printStackTrace();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -201,11 +310,14 @@ public class GatewayServ extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			redirect(request,response,"Servlet Exception","register.jsp");
-		} catch (Exception e)
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			redirect(request,response,"SQL Exception: Please choose a different userid","register.jsp");
+		}catch (Exception e)
 		{
 			e.printStackTrace();
 			redirect(request,response,"SQL Exception: Please choose a different userid","register.jsp");
-		}
+		} 
 		
 		//ID fname Last Name Sex EmailID DOB Address City State Zip Code Telephone Preferences
 	}

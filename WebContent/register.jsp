@@ -33,11 +33,6 @@ maxlength=125><br></td>
 </tr>
 
 <tr >
-<td valign=top colspan=2>
-<b>User Name<sup>*</sup></b><br>
-<input type="text" name="userid" size=10 value=""  maxlength=10>
-</td></tr>
-<tr >
 <td valign=top><b>Password<sup>*</sup></b> 
 <br><input type="password" name="passwd" size=10 value=""  
 maxlength=10></td>

@@ -121,13 +121,7 @@ function logOffButton(){
 	//myButton.onclick = logAction(isLoggedIn);
 	myPara.appendChild(myButton);
 }
-function registerButton(){
-	rgrPara = document.getElementById("register");
-	rgrButton= document.createElement("BUTTON");
-	text = document.createTextNode("Register");
-	rgrButton.appendChild(text);
-	rgrPara.appendChild(rgrButton);
-}
+
 
 function register(){
 	window.location = "register.jsp";
@@ -140,8 +134,7 @@ function register(){
 <tr >
 <td align="left" width="1000000000"></td>
 <td> &nbsp;</td>
-<td align="justify"> <p id="register" onclick="register()"> &nbsp; </p> </td>
-<td align="justify"> <p id="paraID" onclick="logAction()"> &nbsp; </p> </td>
+<td align="justify"><button class="btn" id="logOffBtn" name="logOff" onclick="logAction()">LogOff</button></td>
 </tr>
 </table>
 </body>

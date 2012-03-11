@@ -48,15 +48,16 @@ public class DBManager {
 			connect();
 			System.out.println("Executing query:"+query);
 			Statement statement = getConnection().createStatement();
-			// Execute a statement 
-			resultSet = statement.executeQuery(query);
+			// Execute a statement
+			if(query.contains("insert") || query.contains("update") || query.contains("delete"))
+				statement.executeUpdate(query);
+			else
+				resultSet = statement.executeQuery(query);
 			// Iterate through the result and print the student names
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 		return resultSet;
 	}
 	public Connection getConnection() {

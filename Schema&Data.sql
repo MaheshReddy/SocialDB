@@ -113,6 +113,7 @@ create table cseteam51.userPage(
 pageId varchar(20) NOT NULL,
 userId varchar(20) NOT NULL,
 primary key(pageid),
+unique(userId),
 foreign key(userid) references cseteam51.userinfo(id),
 foreign key(pageid) references cseteam51.page
 );
@@ -249,12 +250,17 @@ insert into sipMember values ('1001','100100103','f');
 
 insert into cseteam51.page values ('2001');
 insert into cseteam51.page values ('2002');
+insert into cseteam51.page values ('2003');
+insert into cseteam51.page values ('2004');
 insert into cseteam51.sippage values ('2001','1001');
 insert into cseteam51.userpage values ('2002','100100101');
+insert into cseteam51.userpage values ('2003','100100102');
+insert into cseteam51.userpage values ('2004','100100103');
 
 
 insert into cseteam51.post values ('20111','2012-10-10','17:00','EST','Its Snowing!:D','100100105','2001');
 insert into cseteam51.post values ('20112','2012-10-11','17:00','EST','GO Seawolves!!!!','100100106','2001');
+insert into cseteam51.post values ('20113','2012-10-11','17:00','EST','Hi First post on you wall','100100106','2002');
 
 
 insert into cseteam51.comment values ('900001','2012-10-10','17:01','EST','Its beautiful! :)','100100101','20111');
@@ -276,3 +282,9 @@ insert into cseteam51.sale values ('200010001','2012-04-22','33331','2','1001001
 insert into cseteam51.sale values ('200010002','2012-04-22','33332','2','100100101');
 insert into cseteam51.sale values ('200010004','2012-04-22','33333','1','100100101');
 insert into cseteam51.sale values ('200010005','2012-04-22','33331','2','100100102');
+
+insert into friend values ('100100101','100100102');
+insert into friend values ('100100101','100100103');
+insert into friend values ('100100102','100100101');
+insert into friend values ('100100103','100100101');
+

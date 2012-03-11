@@ -94,6 +94,30 @@ public class BuildHomePage {
 		return posts;
 	}
 	
+	public ArrayList<Posts> buildComments(String postId){
+		ArrayList<Posts> comments = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select * from comment where postid='"+postId+"'");
+			comments = new ArrayList<Posts>();
+			while(rslSet.next()){
+				Posts comment = new Posts();
+				comment.setAuthor(rslSet.getString("authorId"));
+				comment.setContent(rslSet.getString("content"));
+				comment.setPostid(rslSet.getString("commentId"));
+				comment.setPostDate(rslSet.getString("commentdate"));
+				comment.setPostTime(rslSet.getString("commentTime"));
+				UserTuple usr = findUser(comment.getAuthor());
+				comment.setAuthorFname(usr.getFname());
+				comment.setAuthorLname(usr.getLname());
+				comments.add(comment);
+			}
+			dbMgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return comments;
+	}
 	public UserTuple findUser(String userId){
 		UserTuple usr =null;
 		try {
