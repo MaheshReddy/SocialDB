@@ -29,7 +29,8 @@ public class BuildHomePage {
 				while(rslSet.next()){
 					ResultSet rslSet1 = dbMgr.executeQuery("select id,fname,lname,emailid from userinfo where id='"+rslSet.getString("usrid1")+"'");
 					if(rslSet1.next())
-						friendList.add(new UserTuple(rslSet1.getString("id"), rslSet1.getString("fname") , rslSet1.getString("lname"), rslSet1.getString("emailid")));
+						//friendList.add(new UserTuple(rslSet1.getString("id"), rslSet1.getString("fname") , rslSet1.getString("lname"), rslSet1.getString("emailid")));
+						friendList.add(buildUserTuple(rslSet1));
 				}
 			}
 			dbMgr.disconnect();
@@ -118,16 +119,57 @@ public class BuildHomePage {
 		}
 		return comments;
 	}
+	
+	public ArrayList<UserTuple> buildFriendSearch(String name){
+			ArrayList<UserTuple> searchRslt = null;
+			try {
+				ResultSet rslSet = dbMgr.executeQuery("select * from userInfo where fname='"+name+"' or lname='"+name+"'");
+				searchRslt = new ArrayList<UserTuple>();
+				while(rslSet.next()){
+					searchRslt.add(buildUserTuple(rslSet));
+				}
+				dbMgr.disconnect();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return searchRslt;
+	}
+	
+	public UserTuple buildUserHome(){
+		return findUser(userId);
+	}
+	public ArrayList<UserTuple> buildFriendRequest(){
+		ArrayList<UserTuple> frndRequest = null;
+		
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select fromUsrId from friendRequest where toUsrId='"+userId+"'");
+			frndRequest = new ArrayList<UserTuple>();
+			while(rslSet.next()){
+				frndRequest.add(findUser(rslSet.getString("fromUsrId")));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return frndRequest;
+	}
+	
+	public UserTuple buildUserTuple(ResultSet rslSet) throws SQLException{
+		UserTuple usr = new UserTuple();
+		usr.setFname(rslSet.getString("fname"));
+		usr.setLname(rslSet.getString("lname"));
+		usr.setEmail(rslSet.getString("emailid"));
+		usr.setId(rslSet.getString("id"));
+		return usr;
+	}
 	public UserTuple findUser(String userId){
 		UserTuple usr =null;
 		try {
-			ResultSet rslSet = dbMgr.executeQuery("select fname,lname,emailId from userinfo where id='"+userId+"'");
-			usr =  new UserTuple();
+			ResultSet rslSet = dbMgr.executeQuery("select fname,lname,emailId,id from userinfo where id='"+userId+"'");
 			rslSet.next();
-			usr.setFname(rslSet.getString("fname"));
-			usr.setLname(rslSet.getString("lname"));
-			usr.setEmail(rslSet.getString("emailid"));
-			usr.setId(userId);
+			usr = buildUserTuple(rslSet);
 			dbMgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

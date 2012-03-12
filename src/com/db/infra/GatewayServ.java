@@ -46,7 +46,9 @@ public class GatewayServ extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String requestId = request.getParameter("requestId"); 
+		String requestId = request.getParameter("requestId");
+		System.out.println("Got request "+requestId);
+		try{
 		if(requestId.equals("login"))
 			handleLogin(request, response);
 		else if (requestId.equals("register"))
@@ -59,15 +61,75 @@ public class GatewayServ extends HttpServlet {
 			handleProfileLoad(request,response);
 		else if(requestId.equals("commPost"))
 			handleCommentPost(request,response);
+		else if(requestId.equals("addUser"))
+			handleUserAdd(request,response);
+		else if(requestId.equals("acceptUser"))
+			handleAcceptFriendRequest(request,response);
+		}catch (NullPointerException e) {
+			redirect(request, response, "Error", "Home.jsp");
+			// TODO: handle exception
+		}
 		// TODO Auto-generated method stub
 	}
 	
+	private void handleAcceptFriendRequest(HttpServletRequest request,
+			HttpServletResponse response) {
+		String tarUsrId = request.getParameter("accpUserId");
+		String curUsrId = getCurrentUser(request);
+		try {
+			dbmgr.executeQuery("insert into friend values ('"+tarUsrId+"','"+curUsrId+"')");
+			dbmgr.executeQuery("insert into friend values ('"+curUsrId+"','"+tarUsrId+"')");
+			dbmgr.executeQuery("delete from friendrequest where toUsrId='"+curUsrId+"' and " +
+					"fromUsrId='"+tarUsrId+"'");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		request.setAttribute("activeDiv", "friends");
+		try {
+			redirect(request, response, "ok", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void handleUserAdd(HttpServletRequest request,
+			HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		String tarUsrId = request.getParameter("addUserId");
+		String curUsrId = getCurrentUser(request);
+		try {
+			dbmgr.connect();
+			dbmgr.executeQuery("insert into friendRequest values ('"+curUsrId+"','"+tarUsrId+"')");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		request.setAttribute("activeDiv", "frndRequest");
+		try {
+			redirect(request, response, "ok", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	private void handleCommentPost(HttpServletRequest request,HttpServletResponse response){
 	
-		System.out.println(request.getParameter("userid"));
-		System.out.println(request.getParameter("postid"));
-		String userId = request.getParameter("userid");
-		String postId = request.getParameter("postid");
+		System.out.println(request.getParameter("userId"));
+		System.out.println(request.getParameter("postId"));
+		String userId = request.getParameter("userId");
+		String postId = request.getParameter("postId");
 		Long commId = getNextId("comment", "commentId");
 		String status = null;
 		try {
@@ -82,6 +144,7 @@ public class GatewayServ extends HttpServlet {
 			e.printStackTrace();
 		}
 		try {
+			request.setAttribute("activeDiv", "wall");
 			redirect(request, response, status, "Home.jsp");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -129,6 +192,7 @@ public class GatewayServ extends HttpServlet {
 			e.printStackTrace();
 		}
 		try {
+			request.setAttribute("activeDiv", "wall");
 			redirect(request, response, status, "Home.jsp");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

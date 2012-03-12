@@ -26,7 +26,6 @@ public class DBManager {
 	 //setConnection(DriverManager.getConnection("jdbc:db2://db2serv01.cs.stonybrook.edu:50000/teamdb51","cseteam51","Spring2012"));
 	setConnection(DriverManager.getConnection(buildDBUrl(),getUserId(),getPasswd()));
 	System.out.println("Database connected");
-		System.out.println("wassup asshole");
 	// Close the connection connection.close();
 	}
 	public void disconnect () throws SQLException

@@ -21,34 +21,61 @@
 
 <%
 	String user = null;
+	String curUser = null;
+	String loggedInUser = null;
 	Map<String, String> profile = null;
+	
 	ArrayList<UserTuple> friends = null;
+	ArrayList<UserTuple> usrSearch = null;
+	ArrayList<UserTuple> frnRequest = null;
 	ArrayList<Posts> wall = null;
 	BuildHomePage hmPg = null;
-	ArrayList<UserTuple> frnSearch = null;
+	BuildHomePage loggedInHmPg = null;
+	UserTuple usrTplLoggedIn = null;
+	UserTuple usrTplCurUsr = null;
 	String activeDiv = "pubProfile";
 	Cookie[] cookies = request.getCookies();
+	
 	if (request.getAttribute("userId") != null)
-		user = request.getAttribute("userId").toString();
-	if (user == null)
-		user = request.getParameter("userId");
+		curUser = request.getAttribute("userId").toString();
+	if (curUser == null)
+		curUser = request.getParameter("userId");
+	
 	for (int i = 0; i < cookies.length; i++) {
-		if (cookies[i].getName().equals("userId") && (user == null)) {
-			user = cookies[i].getValue();
-		}
-		if (cookies[i].getName().equals("activeDiv")) {
-			activeDiv = cookies[i].getValue();
+		if (cookies[i].getName().equals("userId")) {
+			loggedInUser = cookies[i].getValue();
 		}
 	}
+
+	if(curUser == null)
+		user = curUser = loggedInUser;
+	else
+		user = curUser;
+	
+	if (request.getParameter("activeDiv") !=null)
+		activeDiv = request.getParameter("activeDiv");
+	else{
+		if(request.getAttribute("activeDiv")!=null)
+			activeDiv = request.getAttribute("activeDiv").toString();
+	}
+	response.getWriter().println(activeDiv);
+	
 	if (user != null) {
+		loggedInHmPg = new BuildHomePage(loggedInUser);
 		hmPg = new BuildHomePage(user);
 		profile = hmPg.buildPublicProfile();
-		friends = hmPg.buildFriends();
-		wall = hmPg.buildWall();
-		if (activeDiv.equals("frdSearch")) {
-			frnSearch = hmPg.buildFriendSearch(request
+		usrTplLoggedIn = loggedInHmPg.buildUserHome();
+		usrTplCurUsr = hmPg.buildUserHome();
+		if(activeDiv.equals("friends"))
+			friends = hmPg.buildFriends();
+		else if(activeDiv.equals("wall"))
+			wall = hmPg.buildWall();
+		else if (activeDiv.equals("usrSearch")) 
+			usrSearch = hmPg.buildFriendSearch(request
 					.getParameter("searchName"));
-		}
+		else if(activeDiv.equals("frndRequest"))
+			frnRequest = hmPg.buildFriendRequest();
+		
 		if (profile != null) {
 
 		} else {
@@ -61,90 +88,15 @@
 	}
 %>
 <script type="text/javascript">
-	var curLoaded = "pubProfile";
-	var actDiv;
+	var curLoaded = "home";
+	
 	function init() {
-		alert("hi");
-		window.location = "index.jsp";
-		actDiv =<%=activeDiv%>;
-		document.write(actDiv);
-		var div1 = document.getElementById(actDiv);
+		curLoaded = "<%=activeDiv%>";
+		var div1 = document.getElementById(curLoaded);
 		div1.style.display = "block";
-		curLoaded = "pubProfile1";
-	}
-
-	/***********************************************
-	 * Dynamic Ajax Content- © Dynamic Drive DHTML code library (www.dynamicdrive.com)
-	 * This notice MUST stay intact for legal use
-	 * Visit Dynamic Drive at http://www.dynamicdrive.com/ for full source code
-	 ***********************************************/
-
-	var bustcachevar = 1 //bust potential caching of external pages after initial request? (1=yes, 0=no)
-	var loadedobjects = ""
-	var rootdomain = "http://" + window.location.hostname
-	var bustcacheparameter = ""
-
-	function ajaxpage(url, containerid) {
-		var page_request = false
-		if (window.XMLHttpRequest) // if Mozilla, Safari etc
-			page_request = new XMLHttpRequest()
-		else if (window.ActiveXObject) { // if IE
-			try {
-				page_request = new ActiveXObject("Msxml2.XMLHTTP")
-			} catch (e) {
-				try {
-					page_request = new ActiveXObject("Microsoft.XMLHTTP")
-				} catch (e) {
-				}
-			}
-		} else
-			return false
-		page_request.onreadystatechange = function() {
-			loadpage(page_request, containerid)
-		}
-		if (bustcachevar) //if bust caching of external page
-			bustcacheparameter = (url.indexOf("?") != -1) ? "&"
-					+ new Date().getTime() : "?" + new Date().getTime()
-		page_request.open('GET', url + bustcacheparameter, true)
-		page_request.send(null)
-	}
-
-	function loadpage(page_request, containerid) {
-		if (page_request.readyState == 4
-				&& (page_request.status == 200 || window.location.href
-						.indexOf("http") == -1))
-			document.getElementById(containerid).innerHTML = page_request.responseText
-	}
-
-	function loadobjs() {
-		if (!document.getElementById)
-			return
-
 		
-
-		for (i = 0; i < arguments.length; i++) {
-			var file = arguments[i]
-			var fileref = ""
-			if (loadedobjects.indexOf(file) == -1) { //Check to see if this object has not already been added to page before proceeding
-				if (file.indexOf(".js") != -1) { //If object is a js file
-					fileref = document.createElement('script')
-					fileref.setAttribute("type", "text/javascript");
-					fileref.setAttribute("src", file);
-				} else if (file.indexOf(".css") != -1) { //If object is a css file
-					fileref = document.createElement("link")
-					fileref.setAttribute("rel", "stylesheet");
-					fileref.setAttribute("type", "text/css");
-					fileref.setAttribute("href", file);
-				}
-			}
-			if (fileref != "") {
-				document.getElementsByTagName("head").item(0).appendChild(
-						fileref)
-				loadedobjects += file + " " //Remember this object as being already added to page
-			}
-		}
 	}
-
+	
 	function toggle(toLoad) {
 		var curDiv = document.getElementById(curLoaded);
 		var toLoadDiv = document.getElementById(toLoad);
@@ -155,46 +107,68 @@
 </script>
 
 <body onload="init()">
+
 	<div class="container-fluid">
 		<div class="row-fluid">
 			<div class="span2">
+			
+			
+				<div class="row-fluid">
+					<div class="span2">
+						<!-- <a id="friendsLink" href="javascript:toggle('friends');">Friends</a> --> 
+						<a id="friendsLink" href="Home.jsp?activeDiv=home">Home</a>
+					</div>
+				</div>
+			
+			
 				<div class="row-fluid">
 					<div class="span4">
-						<a id="home" href="javascript:toggle('pubProfile')">Home</a>
+						<a id="home" href="Home.jsp?activeDiv=pubProfile">Profile</a>
 					</div>
 				</div>
 
 				<div class="row-fluid">
 					<div class="span2">
-						<a id="friendsLink" href="javascript:toggle('friends');">Friends</a>
+						<!-- <a id="friendsLink" href="javascript:toggle('friends');">Friends</a> --> 
+						<a id="friendsLink" href="Home.jsp?activeDiv=friends&userId=<%= user %>">Friends</a>
 					</div>
 				</div>
 
 				<div class="row-fluid">
 					<div class="span2">
-						<a id="walllink" href="javascript:toggle('wall');">Wall</a>
+						<!-- <a id="walllink" href="javascript:toggle('wall');">Wall</a> -->
+						<a id="walllink" href="Home.jsp?activeDiv=wall&userId=<%= user %>">Wall</a>
 					</div>
 				</div>
+				
 				
 				<div class="row-fluid">
 					<div class="span2">
 						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
-						<a id="walllink" href="javascript:toggle('frdSearch');">FriendFinder</a>
+						<a id="frnReqLink" href="Home.jsp?activeDiv=frndRequest">FriendRequests</a>
 					</div>
 				</div>
-				
 				
 				
 			</div>
 			<div class="span10" id="frdSearch" style="display: none" align="justify">
 
-				<form class="well form-search"
-					target="Login?requestId=searchPpl" method="get">
-					<input name="searchName" id="name" type="text" value="name"
-						class="input-medium search-query" />
+				<form class="well form-search" action="Home.jsp" method="post">
+					<input name="searchName" id="name" type="text" class="input-medium search-query"/>
+						<input name="activeDiv" type="hidden" value="usrSearch"/>
+						<input name="requestId" type="hidden" value="searchPpl"/>
 					<button class="btn" type="submit">Search</button>
 				</form>
 			</div>
+
+
+			<div class="span10" id="home" style="display: block" align="justify">
+
+				<h3> Welcome <%= usrTplLoggedIn.getFname() + " "+usrTplLoggedIn.getLname() %>.
+				Showing profile of <%= usrTplCurUsr.getFname()+" "+usrTplCurUsr.getLname() %></h1>
+			</div>
+
+
 			
 			<div class="span10" id="pubProfile" style="display: none"
 				align="justify">
@@ -217,8 +191,8 @@
 			<div class="span10" id="friends" style="display: none">
 				<table class="table table-striped">
 					<%
+						if(friends!=null){
 						Iterator<UserTuple> frnItr = friends.iterator();
-						PrintWriter wrt = response.getWriter();
 						while (frnItr.hasNext()) {
 							UserTuple frn = frnItr.next();
 					%>
@@ -229,10 +203,69 @@
 						<td><%=frn.getEmail()%></td>
 					</tr>
 					<%
-						}
+						}}
+					%>
+					<tr>
+					<td>
+				<form  action="Home.jsp" method="post">
+					<input name="searchName" id="name" type="text" class="input-medium search-query"/>
+						<input name="activeDiv" type="hidden" value="usrSearch"/>
+						<input name="requestId" type="hidden" value="searchPpl"/>
+					<button class="btn" type="submit">Search</button>
+				</form>
+					
+					</td>
+					</tr>
+				</table>
+			</div>
+
+
+			<div class="span10" id="usrSearch" style="display: none">
+				<table class="table table-striped">
+					<%
+						if(usrSearch!=null){
+						Iterator<UserTuple> usrItr = usrSearch.iterator();
+						while (usrItr.hasNext()) {
+							UserTuple usr = usrItr.next();
+					%>
+					<tr>
+						<td><a
+							href="Login?requestId=profileLd&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
+						</a></td>
+						<td><%=usr.getEmail()%></td>
+						<td><a href="Login?requestId=addUser&addUserId=<%=usr.getId()%>">Add</a></td>
+					</tr>
+					<%
+						}}
 					%>
 				</table>
 			</div>
+
+
+
+			<div class="span10" id="frndRequest" style="display: none">
+				<table class="table table-striped">
+					<%
+						if(frnRequest!=null){
+						Iterator<UserTuple> reqItr = frnRequest.iterator();
+						while (reqItr.hasNext()) {
+							UserTuple usr = reqItr.next();
+					%>
+					<tr>
+						<td><a
+							href="Login?requestId=profileLd&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
+						</a></td>
+						<td><%=usr.getEmail()%></td>
+						<td><a href="Login?requestId=acceptUser&accpUserId=<%=usr.getId()%>">Accept</a></td>
+					</tr>
+					<%
+						}}
+					%>
+				</table>
+			</div>
+
+
+
 
 			<div class="span10" id="wall" style="display: none">
 				<table class="table table-striped table-bordered table-condensed">
@@ -245,6 +278,7 @@
 						</td>
 					</tr>
 					<%
+					if(wall!=null){
 						Iterator<Posts> itrPosts = wall.iterator();
 						while (itrPosts.hasNext()) {
 							Posts post = itrPosts.next();
@@ -288,8 +322,7 @@
 
 								</td>
 								</tr>
-								<td align="right"><form class=""
-										action="Login?requestId=commPost&userid=<%=user%>&postid=<%=post.getPostid()%>"
+								<td align="right"><form action="Login?requestId=commPost&userId=<%=user%>&postId=<%=post.getPostid()%>"
 										method="post">
 										<input name="commPost" type="text" align="right" /> <input
 											name="submit" align="right" type="submit" value="post">
@@ -299,12 +332,16 @@
 							</table></td>
 					</tr>
 					<%
-						}
+						}}
 					%>
 					
 				</table>
 			</div>
+			
 		</div>
 	</div>
+	<script type="text/javascript">
+	init();
+</script>
 </body>
 </html>
