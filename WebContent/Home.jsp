@@ -1,3 +1,4 @@
+<%@page import="com.db.infra.Circles"%>
 <%@page import="java.util.ArrayList"%>
 <%@page import="java.io.PrintWriter"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
@@ -11,6 +12,8 @@
 <%@ page import="com.db.infra.BuildHomePage"%>
 <%@ page import="com.db.infra.UserTuple"%>
 <%@ page import="com.db.infra.Posts"%>
+<%@ page import="com.db.infra.SIPEntry"%>
+<%@ page import="com.db.infra.Circles"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -29,6 +32,10 @@
 	ArrayList<UserTuple> usrSearch = null;
 	ArrayList<UserTuple> frnRequest = null;
 	ArrayList<Posts> wall = null;
+	ArrayList<SIPEntry> sips = null;
+	ArrayList<Circles> circles = null;
+	ArrayList<UserTuple> cirAddList = null;
+	
 	BuildHomePage hmPg = null;
 	BuildHomePage loggedInHmPg = null;
 	UserTuple usrTplLoggedIn = null;
@@ -37,9 +44,9 @@
 	Cookie[] cookies = request.getCookies();
 	
 	if (request.getAttribute("userId") != null)
-		curUser = request.getAttribute("userId").toString();
+		curUser = loggedInUser = request.getAttribute("userId").toString();
 	if (curUser == null)
-		curUser = request.getParameter("userId");
+		curUser = loggedInUser =request.getParameter("userId");
 	
 	for (int i = 0; i < cookies.length; i++) {
 		if (cookies[i].getName().equals("userId")) {
@@ -59,7 +66,7 @@
 			activeDiv = request.getAttribute("activeDiv").toString();
 	}
 	response.getWriter().println(activeDiv);
-	
+	String postType = "requestId=wallpost&userid="+user;	
 	if (user != null) {
 		loggedInHmPg = new BuildHomePage(loggedInUser);
 		hmPg = new BuildHomePage(user);
@@ -75,14 +82,19 @@
 					.getParameter("searchName"));
 		else if(activeDiv.equals("frndRequest"))
 			frnRequest = hmPg.buildFriendRequest();
-		
-		if (profile != null) {
-
-		} else {
-			PrintWriter wrt = response.getWriter();
-			wrt.print("Error retriving the value");
-			response.sendRedirect("index.jsp");
+		else if(activeDiv.equals("sipList"))
+			sips = hmPg.buildSips();
+		else if(activeDiv.equals("sipLd"))
+		{
+			wall = hmPg.buildSipPage(request.getParameter("sipPageId"));
+			activeDiv = "wall";
+			postType = "requestId=sipPost&sipPageId="+request.getParameter("sipPageId");
 		}
+		else if(activeDiv.equals("circles")){
+			circles = loggedInHmPg.buildCircles();
+			cirAddList = loggedInHmPg.buildFriends();
+		}
+
 	} else {
 		response.sendRedirect("index.jsp");
 	}
@@ -103,6 +115,44 @@
 		curDiv.style.display = "none";
 		toLoadDiv.style.display = "block";
 		curLoaded = toLoad;
+	}
+	function post_to_url(path, params, method) {
+	    method = method || "post"; // Set method to post by default, if not specified.
+
+	    // The rest of this code assumes you are not using a library.
+	    // It can be made less wordy if you use one.
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+	    for(var key in params) {
+	        if(params.hasOwnProperty(key)) {
+	            var hiddenField = document.createElement("input");
+	            hiddenField.setAttribute("type", "hidden");
+	            hiddenField.setAttribute("name", key);
+	            hiddenField.setAttribute("value", params[key]);
+
+	            form.appendChild(hiddenField);
+	         }
+	    }
+
+	    document.body.appendChild(form);
+	    form.submit();
+	}
+
+	
+	function frnAction(action,Id){
+		var param = new Array();
+		param["requestId"]=action;
+		param["rmUserId"]=Id;
+		post_to_url("Login", param, "post");
+	}
+	function circleAction(action,usrId,cirId){
+		var param = new Array();
+		param['requestId'] = action;
+		param['actUsrId'] = usrId;
+		param['actCrcId'] = cirId;
+		post_to_url("Login", param, "post");
 	}
 </script>
 
@@ -148,6 +198,19 @@
 						<a id="frnReqLink" href="Home.jsp?activeDiv=frndRequest">FriendRequests</a>
 					</div>
 				</div>
+				<div class="row-fluid">
+					<div class="span2">
+						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
+						<a id="sipListlink" href="Home.jsp?activeDiv=sipList">Sips</a>
+					</div>
+				</div>
+				<div class="row-fluid">
+					<div class="span2">
+						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
+						<a id="sipListlink" href="Home.jsp?activeDiv=circles">Circles</a>
+					</div>
+				</div>
+				
 				
 				
 			</div>
@@ -201,6 +264,13 @@
 							href="Login?requestId=profileLd&userId=<%=frn.getId()%>"> <%=frn.getFname() + " " + frn.getLname()%>
 						</a></td>
 						<td><%=frn.getEmail()%></td>
+						<% if (curUser.equals(loggedInUser)){ %>
+						<td>
+						<select>
+						<option onclick="javaScript:frnAction('unfriend','<%=frn.getId()%>')">UnFriend</option>
+						</select>
+						</td>
+						<%} %>
 					</tr>
 					<%
 						}}
@@ -218,6 +288,113 @@
 					</tr>
 				</table>
 			</div>
+
+
+
+			<div class="span10" id="circles" style="display: none">
+				<table class="table table-striped">
+				<tr>
+					<td> 
+					<form action="Login?requestId=createCircle" method="post">
+					<input type="text" id="cirName" name="circleName" value="newCircle"/>
+					<input type="submit" value="create"/>
+					</form>
+					</td>
+					</tr>
+					<%
+						if(circles!=null){
+						Iterator<Circles> crcItr = circles.iterator();
+						while (crcItr.hasNext()) {
+							Circles crc = crcItr.next();
+					%>
+					<tr>
+					<td>
+					<h4> <%=crc.getCircleName() %></h4>
+					</td>
+					<td> Add:
+					<% if(cirAddList!=null){
+						Iterator<UserTuple> cirListIter = cirAddList.iterator();
+						%>
+						<select>
+						<% while(cirListIter.hasNext()){
+							UserTuple cirListUsr = cirListIter.next(); %>
+						
+						<option onclick="javascript:circleAction('addToCircle','<%=cirListUsr.getId()%>','<%=crc.getCircleId()%>')"><%=cirListUsr.getFname() + cirListUsr.getLname()%></option>
+						
+					
+					<%}%>
+					</select>
+					<%} %>
+						
+					</td>
+					</tr>
+					<%if (crc.getCirMembers()!=null){  
+					Iterator<UserTuple> memItr = crc.getCirMembers().iterator();
+					while(memItr.hasNext()){
+					   UserTuple mem = memItr.next();
+					%>
+					<tr>
+						<td><a
+							href="Login?requestId=profileLd&userId=<%=mem.getId()%>"> <%=mem.getFname() + " " + mem.getLname()%>
+						</a></td>
+						<td><%=mem.getEmail()%></td>
+						<td>
+						<select>
+						<option onclick="javascript:circleAction('removeFromCircle','<%=mem.getId()%>','<%=crc.getCircleId()%>')">Remove</option>
+						</select>
+						</td>
+					</tr>
+					<%
+						}}}}
+					%>
+					
+			</table>
+			</div>
+
+
+
+			<div class="span10" id="sipList" style="display: none">
+				<table class="table table-striped">
+					<%
+						if (sips != null) {
+							Iterator<SIPEntry> sipItr = sips.iterator();
+							while (sipItr.hasNext()) {
+								SIPEntry sip = sipItr.next();
+					%>
+					<tr>
+						<td><a
+							href="Home.jsp?activeDiv=sipLd&sipPageId=<%=sip.getSipPageid()%>"> <%=sip.getSipName()%></a>
+						</td>
+					</tr>
+					<%
+						}
+						}
+					%>
+					<tr>
+						<td>
+							<form action="Home.jsp" method="post">
+								<input name="searchSip" id="sipName" type="text"
+									class="input-medium search-query" />
+								<input name="activeDiv"
+									type="hidden" value="sipDisplay" /> 
+								<input name="requestId"
+									type="hidden" value="searchPpl" />
+								<button class="btn" type="submit">Search</button>
+							</form>
+							</td>
+							<form action="Login" method="post">
+								<input name="newSip" id="newSipName" type="text"
+									class="input-medium search-query" />
+								<input name="requestId"
+									type="hidden" value="newSIP" />
+								<button class="btn" type="submit">Search</button>
+							</form>
+					</tr>
+				</table>
+			</div>
+
+
+
 
 
 			<div class="span10" id="usrSearch" style="display: none">
@@ -270,7 +447,7 @@
 			<div class="span10" id="wall" style="display: none">
 				<table class="table table-striped table-bordered table-condensed">
 				<tr>
-						<td><form action="Login?requestId=wallpost&userid=<%=user%>"
+						<td><form action="Login?<%=postType%>"
 								method="post">
 								<input name="wallpost" type="text" /> <input name="submit"
 									type="submit" value="post">

@@ -65,6 +65,18 @@ public class GatewayServ extends HttpServlet {
 			handleUserAdd(request,response);
 		else if(requestId.equals("acceptUser"))
 			handleAcceptFriendRequest(request,response);
+		else if(requestId.equals("sipCreate"))
+			handleSipCreate(request,response);
+		else if(requestId.equals("sipPost"))
+			handleSipPost(request,response);
+		else if(requestId.equals("createCircle"))
+			handleCreateCircle(request,response);
+		else if(requestId.equals("unfriend"))
+			handleRemoveUser(request,response);
+		else if (requestId.equals("addToCircle"))
+			handleAddToCircle(request,response);
+		else if (requestId.equals("removeFromCircle"))
+			hanldeRemoveFromCircle(request,response);
 		}catch (NullPointerException e) {
 			redirect(request, response, "Error", "Home.jsp");
 			// TODO: handle exception
@@ -72,6 +84,127 @@ public class GatewayServ extends HttpServlet {
 		// TODO Auto-generated method stub
 	}
 	
+	private void hanldeRemoveFromCircle(HttpServletRequest request,
+			HttpServletResponse response) {
+		String circId = request.getParameter("actCrcId");
+		String usrId = request.getParameter("actUsrId");
+		try {
+			dbmgr.executeQuery("delete from circleMember where circleId= '"+circId+"' and memberId='"+usrId+"'");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "ok", "Home.jsp?activeDiv=circles");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ServletException e) {
+			e.printStackTrace();
+		}
+
+		
+	}
+
+	private void handleAddToCircle(HttpServletRequest request,
+			HttpServletResponse response) {
+		String circId = request.getParameter("actCrcId");
+		String usrId = request.getParameter("actUsrId");
+		try {
+			dbmgr.executeQuery("insert into circleMember values ('"+circId+"','"+usrId+"')");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "ok", "Home.jsp?activeDiv=circles");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void handleRemoveUser(HttpServletRequest request,
+			HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		String tarUsr = request.getParameter("rmUserId");
+		String curUsr = getCurrentUser(request);
+		try {
+			dbmgr.executeQuery("delete from friend where usrid1='"+tarUsr+"' and usrid2='"+curUsr+"'");
+			dbmgr.executeQuery("delete from friend where usrid1='"+curUsr+"' and usrid2='"+tarUsr+"'");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "ok", "Home.jsp?activeDiv=friends");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void handleCreateCircle(HttpServletRequest request,
+			HttpServletResponse response) {
+		String cirName = request.getParameter("circleName");
+		String userId = getCurrentUser(request);
+		long nextCirId = getNextId("circle", "circleId");
+		try {
+			dbmgr.executeQuery("insert into circle values ('"+Long.toString(nextCirId)+"','"+cirName+"','"+userId+"')");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "ok", "Home.jsp?activeDiv=circles");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void handleSipPost(HttpServletRequest request,
+			HttpServletResponse response) {
+		String sipId = request.getParameter("sipPageId");
+		long postId = getNextId("post", "postid");
+		String curUsrId = getCurrentUser(request);
+		try {
+			dbmgr.executeQuery("insert into cseteam51.post " +
+					"values ('"+Long.toString(postId)+"','2012-10-11','17:00','EST','"+request.getParameter("wallpost")+"','"+curUsrId+"','"+sipId+"')");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			request.setAttribute("activeDiv", "sipLd");
+			redirect(request, response, "ok", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void handleSipCreate(HttpServletRequest request,
+			HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	private void handleAcceptFriendRequest(HttpServletRequest request,
 			HttpServletResponse response) {
 		String tarUsrId = request.getParameter("accpUserId");
@@ -180,7 +313,7 @@ public class GatewayServ extends HttpServlet {
 			if(rslSet.next()){
 				pageId = rslSet.getString("pageid");
 				long postId = getNextId("post","postid");
-				rslSet = dbmgr.executeQuery("insert into cseteam51.post " +
+				 dbmgr.executeQuery("insert into cseteam51.post " +
 						"values ('"+Long.toString(postId)+"','2012-10-11','17:00','EST','"+request.getParameter("wallpost")+"','"+userId+"','"+pageId+"')");
 				status="OK";
 				dbmgr.disconnect();
@@ -327,10 +460,12 @@ public class GatewayServ extends HttpServlet {
 		if(!request.getParameter("passwd").equals(request.getParameter("passwd2")))
 			redirect(request,response,"Password Mismatch","index.jsp");
 		
-		
+		long wallId = getNextId("page", "pageid");
+		dbmgr.executeQuery("insert into cseteam51.page values ('"+wallId+"')");
+		dbmgr.disconnect();
 		
 			String query = ("insert into cseteam51.userinfo" +
-					"(id,fname,lname,sex,emailid,dob,address,city,state,zipcode,telephone)" +
+					"(id,fname,lname,sex,emailid,dob,address,city,state,zipcode,telephone,wallid)" +
 					"values (");
 			long userId = getNextId("userinfo","id");
 			query = query +"'" +Long.toString(userId)+"',";
@@ -343,7 +478,8 @@ public class GatewayServ extends HttpServlet {
 			query = query +"'" + request.getParameter("city")+"',";
 			query = query +"'" + request.getParameter("state")+"',";
 			query = query +"'" + request.getParameter("zip")+"',";
-			query = query +"'" + request.getParameter("tele")+"')";
+			query = query +"'" + request.getParameter("tele")+"',";
+			query = query +"'" + wallId +"')";
 			dbmgr.executeQuery(query);
 			dbmgr.disconnect();
 			
@@ -355,10 +491,7 @@ public class GatewayServ extends HttpServlet {
 			dbmgr.executeQuery(query);
 			dbmgr.disconnect();
 			
-			long wallId = getNextId("page", "pageid");
-			dbmgr.executeQuery("insert into cseteam51.page values ('"+wallId+"')");
-			dbmgr.executeQuery("insert into cseteam51.userpage values ('"+wallId+"','"+userId+"')");
-			dbmgr.disconnect();
+			
 			System.out.println("Registratoin Done");
 			redirect(request, response, "Registration Succesfull", "index.jsp");
 			//response.sendRedirect("index.jsp");

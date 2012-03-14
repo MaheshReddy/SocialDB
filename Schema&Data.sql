@@ -5,8 +5,6 @@ drop table cseteam51.circle;
 drop table cseteam51.circleMember;
 drop table cseteam51.sip;
 drop table cseteam51.sipmember;
-drop table cseteam51.sippage;
-drop table cseteam51.userpage;
 drop table cseteam51.page;
 drop table cseteam51.post;
 drop table cseteam51.comment;
@@ -16,6 +14,12 @@ drop table cseteam51.advt;
 drop table cseteam51.sale;
 drop table cseteam51.friendRequest;
 drop table cseteam51.friend;
+
+
+create table cseteam51.page(
+pageId varchar(20) NOT NULL,
+primary key(pageId)
+);
 
 create TABLE cseteam51.userinfo(
 ID  varchar(20) PRIMARY KEY NOT NULL, 
@@ -29,7 +33,10 @@ City varchar(20) NOT NULL,
 State varchar(10) NOT NULL,
 ZipCode varchar(10) NOT NULL,
 Telephone varchar(15) NOT NULL,
-UNIQUE (EmailID)
+wallid varchar(20) NOT NULL,
+UNIQUE (EmailID),
+foreign key(wallid) references cseteam51.page,
+unique(wallid)
 );
 
 create TABLE cseteam51.userPasswd(
@@ -80,12 +87,17 @@ foreign key(memberId) references cseteam51.userinfo(id),
 primary key(circleid,memberid)
 );
 
+
 create table cseteam51.sip(
 sipId varchar(20) NOT NULL,
 sipName varchar(20) NOT NULL,
+sipPageId varchar(20) NOT NULL,
 primary key(sipid),
-unique(sipName)
+unique(sipName),
+foreign key(sipPageId) references page(pageid),
+unique(sipPageId)
 );
+
 
 create table cseteam51.sipMember(
 sipId varchar(20) NOT NULL,
@@ -94,28 +106,6 @@ moderator varchar(1),
 primary key(sipId,memberId),
 foreign key(memberID) references cseteam51.userinfo(id),
 foreign key(sipid) references cseteam51.sip
-);
-
-create table cseteam51.page(
-pageId varchar(20) NOT NULL,
-primary key(pageId)
-);
-
-create table cseteam51.sipPage( 
-pageId varchar(20) NOT NULL,
-sipId varchar(20) NOT NULL,
-primary key(pageid),
-foreign key(sipid) references cseteam51.sip,
-foreign key(pageid) references cseteam51.page
-);
-
-create table cseteam51.userPage(
-pageId varchar(20) NOT NULL,
-userId varchar(20) NOT NULL,
-primary key(pageid),
-unique(userId),
-foreign key(userid) references cseteam51.userinfo(id),
-foreign key(pageid) references cseteam51.page
 );
 
 
@@ -185,25 +175,35 @@ foreign key(advtId) references cseteam51.advt,
 foreign key(userId) references cseteam51.userinfo(id)
 );
 
+insert into cseteam51.page values ('2001');
+insert into cseteam51.page values ('2002');
+insert into cseteam51.page values ('2003');
+insert into cseteam51.page values ('2004');
+insert into cseteam51.page values ('2005');
+insert into cseteam51.page values ('2006');
+insert into cseteam51.page values ('2007');
+insert into cseteam51.page values ('2008');
+
+
 
 insert into USERINFO values
 ('100100101', 'Alice', 'McKeeny', 'F', 'alice@blah.com' ,'1988-10-10', 
-'Chapin Apt 2010,Health Drive','Stony Brook', 'NY' ,'11790', '4314649881');
+'Chapin Apt 2010,Health Drive','Stony Brook', 'NY' ,'11790', '4314649881','2001');
 insert into USERINFO values
 ('100100102', 'Bob', 'Wonderwall', 'M', 'bob@blah.com' ,'1988-8-6', 
-'21 MajorApt,Oak St','NewYork', 'NY' ,'11700', '4314649882');
+'21 MajorApt,Oak St','NewYork', 'NY' ,'11700', '4314649882','2002');
 insert into USERINFO values
 ('100100103', 'Elisa', 'Roth', 'F', 'elisa@blah.com' ,'1992-11-10', 
-'43 Corvette Apt,Maple St','Stony Brook', 'NY' ,'11790', '4314649883');
+'43 Corvette Apt,Maple St','Stony Brook', 'NY' ,'11790', '4314649883','2003');
 insert into USERINFO values
 ('100100104', 'Kelly', 'Mcdonald', 'F', 'kelly@blah.com' ,'1991-12-11', 
-'54 East Apt,Oak St','Newyork', 'NY' ,'11700', '4314649884');
+'54 East Apt,Oak St','Newyork', 'NY' ,'11700', '4314649884','2004');
 insert into USERINFO values
 ('100100105', 'Wendy', 'Stanley', 'F', 'wendy@blah.com' ,'1992-8-8', 
-'MajorApt,Oak St.','Stony Brook', 'NY' ,'11790', '4314649885');
+'MajorApt,Oak St.','Stony Brook', 'NY' ,'11790', '4314649885','2005');
 insert into USERINFO values
 ('100100106', 'Dennis', 'Ritche', 'M', 'den@blah.com' ,'1992-2-3', 
-'43 Corvette Apt, Maple St','NewYork', 'NY' ,'11790', '4314649886');
+'43 Corvette Apt, Maple St','NewYork', 'NY' ,'11790', '4314649886','2006');
 
 insert into USERPASSWD values
 ('100100101','alice','alice@blah.com');
@@ -242,25 +242,15 @@ insert into circleMember values ('8002','100100105');
 insert into circleMember values ('8002','100100106');
 
 
-insert into sip values ('1001','CSE532');
+insert into sip values ('1001','CSE532','2007');
 
 insert into sipMember values ('1001','100100101','t');
 insert into sipMember values ('1001','100100102','f');
 insert into sipMember values ('1001','100100103','f');
 
-insert into cseteam51.page values ('2001');
-insert into cseteam51.page values ('2002');
-insert into cseteam51.page values ('2003');
-insert into cseteam51.page values ('2004');
-insert into cseteam51.sippage values ('2001','1001');
-insert into cseteam51.userpage values ('2002','100100101');
-insert into cseteam51.userpage values ('2003','100100102');
-insert into cseteam51.userpage values ('2004','100100103');
-
-
-insert into cseteam51.post values ('20111','2012-10-10','17:00','EST','Its Snowing!:D','100100105','2001');
-insert into cseteam51.post values ('20112','2012-10-11','17:00','EST','GO Seawolves!!!!','100100106','2001');
-insert into cseteam51.post values ('20113','2012-10-11','17:00','EST','Hi First post on you wall','100100106','2002');
+insert into cseteam51.post values ('20111','2012-10-10','17:00','EST','Its Snowing!:D','100100105','2007');
+insert into cseteam51.post values ('20112','2012-10-11','17:00','EST','GO Seawolves!!!!','100100106','2007');
+insert into cseteam51.post values ('20113','2012-10-11','17:00','EST','Hi First post on you wall','100100106','2001');
 
 
 insert into cseteam51.comment values ('900001','2012-10-10','17:01','EST','Its beautiful! :)','100100101','20111');

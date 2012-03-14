@@ -69,24 +69,13 @@ public class BuildHomePage {
 	public ArrayList<Posts> buildWall(){
 		ArrayList<Posts> posts = null;
 		try {
-			ResultSet rslSet = dbMgr.executeQuery("select pageId from userpage where userid='"+userId+"'");
+			ResultSet rslSet = dbMgr.executeQuery("select wallid from userinfo where id='"+userId+"'");
 			posts = new ArrayList<Posts>();
 			rslSet.next();
-			String pageId = rslSet.getString("pageId");
+			String pageId = rslSet.getString("wallid");
 			rslSet = dbMgr.executeQuery("select * from post where pageid='"+pageId+"'");
 			while(rslSet.next()){
-				Posts post = new Posts();
-				post.setAuthor(rslSet.getString("author"));
-				post.setContent(rslSet.getString("content"));
-				post.setPageid(rslSet.getString("pageid"));
-				post.setPostDate(rslSet.getString("postdate"));
-				post.setPostid(rslSet.getString("postid"));
-				post.setPostTime(rslSet.getString("posttime"));
-				post.setTimeZone(rslSet.getString("timezone"));
-				UserTuple usr = findUser(post.getAuthor());
-				post.setAuthorFname(usr.getFname());
-				post.setAuthorLname(usr.getLname());
-				posts.add(post);
+				posts.add(buildPost(rslSet));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -155,6 +144,71 @@ public class BuildHomePage {
 		}
 		return frndRequest;
 	}
+	public ArrayList<SIPEntry> buildSips(){
+		ArrayList<SIPEntry> sips = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select sipid from sipMember where memberId='"+userId+"'");
+			sips = new ArrayList<SIPEntry>();
+			while(rslSet.next()){
+				ResultSet rslSet1 = dbMgr.executeQuery("select * from sip where sipid='"
+						+rslSet.getString("sipid")+"'");
+				if(rslSet1.next())
+				sips.add(buildSIPEntry(rslSet1));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return sips;
+	}
+	
+	public ArrayList<Posts> buildSipPage(String sipPageId){
+		ArrayList<Posts> sipPosts = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select * from post where pageid='"+sipPageId+"'");
+			sipPosts = new ArrayList<Posts>();
+			while(rslSet.next())
+				sipPosts.add(buildPost(rslSet));
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return sipPosts;
+		
+	}
+	public ArrayList<Circles> buildCircles() {
+		ArrayList<Circles> circles = null;
+		ResultSet rslSet;
+		try {
+			rslSet = dbMgr.executeQuery("select * from circle where ownerId='"+userId+"'");
+			circles = new ArrayList<Circles>();
+			while(rslSet.next()){
+				String circleId = rslSet.getString("circleId");
+				Circles crc = new Circles();
+				crc.setCircleId(circleId);
+				crc.setCircleName(rslSet.getString("circlename"));
+				ResultSet rslSet1 = dbMgr.executeQuery("select * from circleMember where circleId='"+circleId+"'");
+				crc.setCirMembers(new ArrayList<UserTuple>());
+				while (rslSet1.next())
+					crc.getCirMembers().add(findUser(rslSet1.getString("memberId")));
+				circles.add(crc);
+			}
+
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+		return circles;
+		
+	}
+	public SIPEntry buildSIPEntry(ResultSet rslSet) throws SQLException{
+		SIPEntry sip = new SIPEntry();
+		sip.setSipId(rslSet.getString("sipId"));
+		sip.setSipName(rslSet.getString("sipName"));
+		sip.setSipPageid(rslSet.getString("sippageid"));
+		return sip;
+	}
+	
 	
 	public UserTuple buildUserTuple(ResultSet rslSet) throws SQLException{
 		UserTuple usr = new UserTuple();
@@ -177,4 +231,20 @@ public class BuildHomePage {
 		}
 		return usr;
 	}
+	
+	public Posts buildPost(ResultSet rslSet) throws SQLException{
+		Posts post = new Posts();
+		post.setAuthor(rslSet.getString("author"));
+		post.setContent(rslSet.getString("content"));
+		post.setPageid(rslSet.getString("pageid"));
+		post.setPostDate(rslSet.getString("postdate"));
+		post.setPostid(rslSet.getString("postid"));
+		post.setPostTime(rslSet.getString("posttime"));
+		post.setTimeZone(rslSet.getString("timezone"));
+		UserTuple usr = findUser(post.getAuthor());
+		post.setAuthorFname(usr.getFname());
+		post.setAuthorLname(usr.getLname());
+		return post;
+	}
+
 }
