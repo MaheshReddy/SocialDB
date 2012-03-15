@@ -9,6 +9,8 @@ public class SIPEntry {
 	private ArrayList<UserTuple> moderators;
 	private ArrayList<UserTuple> members;
 	private String sipPageid;
+	private boolean isModerator=false;
+	private boolean isMember=false;
 	public String getSipName() {
 		return sipName;
 	}
@@ -38,5 +40,17 @@ public class SIPEntry {
 	}
 	public void setSipPageid(String sipPageid) {
 		this.sipPageid = sipPageid;
+	}
+	public void setModerator(boolean isModerator) {
+		this.isModerator = isModerator;
+	}
+	public boolean isModerator() {
+		return isModerator;
+	}
+	public void setMember(boolean isMember) {
+		this.isMember = isMember;
+	}
+	public boolean isMember() {
+		return isMember;
 	}
 }

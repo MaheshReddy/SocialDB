@@ -1,6 +1,10 @@
 package com.db.infra;
 
-public class UserTuple {
+import java.util.ArrayList;
+
+import com.db.interfaces.Listable;
+
+public class UserTuple implements Listable{
 		private String id;
 		String fname;
 		String lname;
@@ -37,5 +41,22 @@ public class UserTuple {
 		}
 		public void setEmail(String email) {
 			this.email = email;
+		}
+		@Override
+		public String getFieldOne() {
+			return fname+" "+lname;
+		}
+		@Override
+		public String getFieldTwo() {
+			return email;
+		}
+		@Override
+		public ArrayList<String> getActions() {
+			// TODO Auto-generated method stub
+			ArrayList<String> actions = new ArrayList<String>();
+			actions.add("Add");
+			actions.add("Accept");
+			actions.add("Remove");
+			return actions;
 		}
 }

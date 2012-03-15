@@ -1,3 +1,4 @@
+<%@page import="com.db.infra.SipAuthRequest"%>
 <%@page import="com.db.infra.Circles"%>
 <%@page import="java.util.ArrayList"%>
 <%@page import="java.io.PrintWriter"%>
@@ -14,6 +15,7 @@
 <%@ page import="com.db.infra.Posts"%>
 <%@ page import="com.db.infra.SIPEntry"%>
 <%@ page import="com.db.infra.Circles"%>
+<%@ page import="com.db.interfaces.Listable"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -28,18 +30,21 @@
 	String loggedInUser = null;
 	Map<String, String> profile = null;
 	
-	ArrayList<UserTuple> friends = null;
+	ArrayList<Listable> friends = null;
 	ArrayList<UserTuple> usrSearch = null;
 	ArrayList<UserTuple> frnRequest = null;
 	ArrayList<Posts> wall = null;
 	ArrayList<SIPEntry> sips = null;
 	ArrayList<Circles> circles = null;
-	ArrayList<UserTuple> cirAddList = null;
+	ArrayList<Listable> cirAddList = null;
+	
+	ArrayList<SipAuthRequest> sipReqs = null;
 	
 	BuildHomePage hmPg = null;
 	BuildHomePage loggedInHmPg = null;
 	UserTuple usrTplLoggedIn = null;
 	UserTuple usrTplCurUsr = null;
+	String authUrl=null;
 	String activeDiv = "pubProfile";
 	Cookie[] cookies = request.getCookies();
 	
@@ -80,10 +85,27 @@
 		else if (activeDiv.equals("usrSearch")) 
 			usrSearch = hmPg.buildFriendSearch(request
 					.getParameter("searchName"));
-		else if(activeDiv.equals("frndRequest"))
+		
+		else if(activeDiv.equals("frnAuthRequest"))
+		{
 			frnRequest = hmPg.buildFriendRequest();
+			authUrl= "Login?requestId=acceptUser";
+		}
+
+		else if(activeDiv.equals("sipAuthRequest"))
+		{
+			sipReqs = hmPg.buildSipRequest();
+			authUrl= "Login?requestId=acceptSipUser";
+		}
+		
 		else if(activeDiv.equals("sipList"))
-			sips = hmPg.buildSips();
+			sips = loggedInHmPg.buildSips();
+		
+		else if(activeDiv.equals("searchSip")){
+			sips = loggedInHmPg.searchSip(request.getParameter("searchSipName"));
+			activeDiv = "sipList";
+		}
+			
 		else if(activeDiv.equals("sipLd"))
 		{
 			wall = hmPg.buildSipPage(request.getParameter("sipPageId"));
@@ -147,12 +169,28 @@
 		param["rmUserId"]=Id;
 		post_to_url("Login", param, "post");
 	}
+	
 	function circleAction(action,usrId,cirId){
 		var param = new Array();
 		param['requestId'] = action;
 		param['actUsrId'] = usrId;
 		param['actCrcId'] = cirId;
 		post_to_url("Login", param, "post");
+	}
+	
+	function sipAction(action,sipId){
+		var param = new Array();
+		param['requestId'] = action;
+		param['sipId'] = sipId;
+		post_to_url("Login",param,"post");
+	}
+	
+	function sipRmuser(action,sipId,userid){
+		var param = new Array();
+		param['requestId'] = action;
+		param['sipId'] = sipId;
+		param['sipRmUsrId'] = userid;
+		post_to_url("Login",param,"post");
 	}
 </script>
 
@@ -195,12 +233,6 @@
 				<div class="row-fluid">
 					<div class="span2">
 						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
-						<a id="frnReqLink" href="Home.jsp?activeDiv=frndRequest">FriendRequests</a>
-					</div>
-				</div>
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
 						<a id="sipListlink" href="Home.jsp?activeDiv=sipList">Sips</a>
 					</div>
 				</div>
@@ -211,6 +243,19 @@
 					</div>
 				</div>
 				
+				<div class="row-fluid">
+					<div class="span2">
+						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
+						<a id="frnReqLink" href="Home.jsp?activeDiv=frnAuthRequest">FriendRequests</a>
+					</div>
+				</div>
+				
+				<div class="row-fluid">
+					<div class="span2">
+						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
+						<a id="sipAuthLink" href="Home.jsp?activeDiv=sipAuthRequest">SipRequests</a>
+					</div>
+				</div>
 				
 				
 			</div>
@@ -255,15 +300,15 @@
 				<table class="table table-striped">
 					<%
 						if(friends!=null){
-						Iterator<UserTuple> frnItr = friends.iterator();
+						Iterator<Listable> frnItr = friends.iterator();
 						while (frnItr.hasNext()) {
-							UserTuple frn = frnItr.next();
+							Listable frn = frnItr.next();
 					%>
 					<tr>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=frn.getId()%>"> <%=frn.getFname() + " " + frn.getLname()%>
+							href="Login?requestId=profileLd&userId=<%=frn.getId()%>"> <%=frn.getFieldOne()%>
 						</a></td>
-						<td><%=frn.getEmail()%></td>
+						<td><%=frn.getFieldTwo()%></td>
 						<% if (curUser.equals(loggedInUser)){ %>
 						<td>
 						<select>
@@ -313,13 +358,13 @@
 					</td>
 					<td> Add:
 					<% if(cirAddList!=null){
-						Iterator<UserTuple> cirListIter = cirAddList.iterator();
+						Iterator<Listable> cirListIter = cirAddList.iterator();
 						%>
 						<select>
 						<% while(cirListIter.hasNext()){
-							UserTuple cirListUsr = cirListIter.next(); %>
+							Listable cirListUsr = cirListIter.next(); %>
 						
-						<option onclick="javascript:circleAction('addToCircle','<%=cirListUsr.getId()%>','<%=crc.getCircleId()%>')"><%=cirListUsr.getFname() + cirListUsr.getLname()%></option>
+						<option onclick="javascript:circleAction('addToCircle','<%=cirListUsr.getId()%>','<%=crc.getCircleId()%>')"><%=cirListUsr.getFieldOne()%></option>
 						
 					
 					<%}%>
@@ -329,15 +374,15 @@
 					</td>
 					</tr>
 					<%if (crc.getCirMembers()!=null){  
-					Iterator<UserTuple> memItr = crc.getCirMembers().iterator();
+					Iterator<Listable> memItr = crc.getCirMembers().iterator();
 					while(memItr.hasNext()){
-					   UserTuple mem = memItr.next();
+					   Listable mem = memItr.next();
 					%>
 					<tr>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=mem.getId()%>"> <%=mem.getFname() + " " + mem.getLname()%>
+							href="Login?requestId=profileLd&userId=<%=mem.getId()%>"> <%=mem.getFieldOne()%>
 						</a></td>
-						<td><%=mem.getEmail()%></td>
+						<td><%=mem.getFieldTwo()%></td>
 						<td>
 						<select>
 						<option onclick="javascript:circleAction('removeFromCircle','<%=mem.getId()%>','<%=crc.getCircleId()%>')">Remove</option>
@@ -355,6 +400,27 @@
 
 			<div class="span10" id="sipList" style="display: none">
 				<table class="table table-striped">
+									<tr>
+						<td>
+							<form action="Home.jsp" method="post">
+								<input name="searchSipName" id="sipName" type="text"
+									class="input-medium search-query" />
+								<input name="activeDiv"
+									type="hidden" value="searchSip" /> 
+								<button class="btn" type="submit">Search</button>
+							</form>
+							</td>
+					<td>
+							<form action="Login" method="post">
+								<input name="newSip" id="newSipName" type="text"
+									class="input-medium search-query" />
+								<input name="requestId"
+									type="hidden" value="newSIP" />
+								<button class="btn" type="submit">New</button>
+							</form>
+							</td>
+					</tr>
+				
 					<%
 						if (sips != null) {
 							Iterator<SIPEntry> sipItr = sips.iterator();
@@ -362,34 +428,47 @@
 								SIPEntry sip = sipItr.next();
 					%>
 					<tr>
-						<td><a
-							href="Home.jsp?activeDiv=sipLd&sipPageId=<%=sip.getSipPageid()%>"> <%=sip.getSipName()%></a>
+						<% if(sip.isMember()){%>
+						<td>
+						<a href="Home.jsp?activeDiv=sipLd&sipPageId=<%=sip.getSipPageid()%>"> <%=sip.getSipName()%></a>
 						</td>
+							<%}else{ %>
+							<td>
+							<%=sip.getSipName()%>
+							</td>
+							<td>
+							<select>
+							<option onclick="javascript:sipAction('joinSIP','<%=sip.getSipId()%>')">Join</option>
+							</select>
+							</td>
+							<%} %>
+						<% if(sip.isModerator())
+						{
+							%>
+							<td>
+							<select>
+							<option onclick="javascript:sipAction('deleteSIP','<%=sip.getSipId()%>')">Delete</option>
+							</select>
+							</td>
+							<td>
+							<select>
+							<%
+							if(sip.getMembers()!=null){
+							Iterator<UserTuple> memItr = sip.getMembers().iterator();
+							while(memItr.hasNext())
+							{
+								UserTuple mem = memItr.next();
+						%>
+						<option onclick="javascript:sipRmuser('sipRmUsr','<%=sip.getSipId()%>','<%=mem.getId()%>')">'<%=mem.getFieldOne()%>'</option>
+						<%}} %>
+						</select>
+						</td>
+						<%} %>
 					</tr>
 					<%
 						}
 						}
 					%>
-					<tr>
-						<td>
-							<form action="Home.jsp" method="post">
-								<input name="searchSip" id="sipName" type="text"
-									class="input-medium search-query" />
-								<input name="activeDiv"
-									type="hidden" value="sipDisplay" /> 
-								<input name="requestId"
-									type="hidden" value="searchPpl" />
-								<button class="btn" type="submit">Search</button>
-							</form>
-							</td>
-							<form action="Login" method="post">
-								<input name="newSip" id="newSipName" type="text"
-									class="input-medium search-query" />
-								<input name="requestId"
-									type="hidden" value="newSIP" />
-								<button class="btn" type="submit">Search</button>
-							</form>
-					</tr>
 				</table>
 			</div>
 
@@ -420,7 +499,7 @@
 
 
 
-			<div class="span10" id="frndRequest" style="display: none">
+			<div class="span10" id="authRequest" style="display: none">
 				<table class="table table-striped">
 					<%
 						if(frnRequest!=null){
@@ -433,7 +512,28 @@
 							href="Login?requestId=profileLd&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
 						</a></td>
 						<td><%=usr.getEmail()%></td>
-						<td><a href="Login?requestId=acceptUser&accpUserId=<%=usr.getId()%>">Accept</a></td>
+						<td><a href="<%=authUrl%>&accpUserId=<%=usr.getId()%>">Accept</a></td>
+					</tr>
+					<%
+						}}
+					%>
+				</table>
+			</div>
+
+			<div class="span10" id="sipAuthRequest" style="display: none">
+				<table class="table table-striped">
+					<%
+						if(sipReqs!=null){
+						Iterator<SipAuthRequest> reqItr = sipReqs.iterator();
+						while (reqItr.hasNext()) {
+							SipAuthRequest req = reqItr.next();
+					%>
+					<tr>
+						<td><a
+							href="Login?requestId=profileLd&userId=<%=req.getUser().getId()%>"> <%=req.getUser().getFname() + " " + req.getUser().getLname()%>
+						</a></td>
+						<td><%=req.getUser().getEmail()%></td>
+						<td><a href="<%=authUrl%>&accpUserId=<%=req.getUser().getId()%>&sipId=<%=req.getSip().getSipId()%>">Accept</a></td>
 					</tr>
 					<%
 						}}

@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.db.interfaces.Listable;
 import com.db.jdbc.DBManager;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 
 
 public class BuildHomePage {
@@ -19,9 +21,9 @@ public class BuildHomePage {
 	}
 	public BuildHomePage(){}
 	
-	public ArrayList<UserTuple> buildFriends(){
+	public ArrayList<Listable> buildFriends(){
 		
-		ArrayList<UserTuple> friendList = new ArrayList<UserTuple>();;
+		ArrayList<Listable> friendList = new ArrayList<Listable>();;
 		try {
 			ResultSet rslSet = dbMgr.executeQuery("select usrid1 from friend where usrid2='"+userId+"'");
 			if(rslSet !=null)
@@ -77,6 +79,7 @@ public class BuildHomePage {
 			while(rslSet.next()){
 				posts.add(buildPost(rslSet));
 			}
+			dbMgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -112,7 +115,7 @@ public class BuildHomePage {
 	public ArrayList<UserTuple> buildFriendSearch(String name){
 			ArrayList<UserTuple> searchRslt = null;
 			try {
-				ResultSet rslSet = dbMgr.executeQuery("select * from userInfo where fname='"+name+"' or lname='"+name+"'");
+				ResultSet rslSet = dbMgr.executeQuery("select * from userInfo where fname='"+name.toUpperCase()+"' or lname='"+name.toUpperCase()+"'");
 				searchRslt = new ArrayList<UserTuple>();
 				while(rslSet.next()){
 					searchRslt.add(buildUserTuple(rslSet));
@@ -138,6 +141,7 @@ public class BuildHomePage {
 			while(rslSet.next()){
 				frndRequest.add(findUser(rslSet.getString("fromUsrId")));
 			}
+			dbMgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,19 +151,58 @@ public class BuildHomePage {
 	public ArrayList<SIPEntry> buildSips(){
 		ArrayList<SIPEntry> sips = null;
 		try {
-			ResultSet rslSet = dbMgr.executeQuery("select sipid from sipMember where memberId='"+userId+"'");
+			ResultSet rslSet = dbMgr.executeQuery("select sipid,moderator from sipMember where memberId='"+userId+"'");
 			sips = new ArrayList<SIPEntry>();
 			while(rslSet.next()){
 				ResultSet rslSet1 = dbMgr.executeQuery("select * from sip where sipid='"
 						+rslSet.getString("sipid")+"'");
-				if(rslSet1.next())
-				sips.add(buildSIPEntry(rslSet1));
+				if(rslSet1.next()){
+					SIPEntry sip = buildSIPEntry(rslSet1);
+					sips.add(sip);
+				}
 			}
+			dbMgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return sips;
+	}
+	
+	public ArrayList<SipAuthRequest> buildSipRequest(){
+		ArrayList<SipAuthRequest> sipReqs = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select * from SIPPENDING where moderator='"+userId+"'");
+			sipReqs = new ArrayList<SipAuthRequest>();
+			while(rslSet.next()){
+				SipAuthRequest sipReq= new SipAuthRequest();
+				SIPEntry sip = new SIPEntry();
+				sip.setSipId(rslSet.getString("sipid"));
+				sipReq.setSip(sip);
+				sipReq.setUser(findUser(rslSet.getString("memberid")));
+				sipReqs.add(sipReq);
+			}
+			dbMgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return sipReqs;
+	}
+	
+	public ArrayList<SIPEntry> searchSip(String sipName){
+		ArrayList<SIPEntry> sipList = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select * from sip where sipName ='"+sipName.toUpperCase()+"'");
+			sipList = new ArrayList<SIPEntry>();
+			if(rslSet.next())
+				sipList.add(buildSIPEntry(rslSet));
+			dbMgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return sipList;
 	}
 	
 	public ArrayList<Posts> buildSipPage(String sipPageId){
@@ -169,6 +212,7 @@ public class BuildHomePage {
 			sipPosts = new ArrayList<Posts>();
 			while(rslSet.next())
 				sipPosts.add(buildPost(rslSet));
+			dbMgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -188,12 +232,12 @@ public class BuildHomePage {
 				crc.setCircleId(circleId);
 				crc.setCircleName(rslSet.getString("circlename"));
 				ResultSet rslSet1 = dbMgr.executeQuery("select * from circleMember where circleId='"+circleId+"'");
-				crc.setCirMembers(new ArrayList<UserTuple>());
+				crc.setCirMembers(new ArrayList<Listable>());
 				while (rslSet1.next())
 					crc.getCirMembers().add(findUser(rslSet1.getString("memberId")));
 				circles.add(crc);
 			}
-
+			dbMgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -201,11 +245,37 @@ public class BuildHomePage {
 		return circles;
 		
 	}
-	public SIPEntry buildSIPEntry(ResultSet rslSet) throws SQLException{
+	
+	public SIPEntry buildSIPEntry(ResultSet rslSet) {
 		SIPEntry sip = new SIPEntry();
-		sip.setSipId(rslSet.getString("sipId"));
+		try {
+			sip.setSipId(rslSet.getString("sipId"));
+		
 		sip.setSipName(rslSet.getString("sipName"));
 		sip.setSipPageid(rslSet.getString("sippageid"));
+		ResultSet rslSet1 = dbMgr.executeQuery("select memberId,moderator from sipMember where sipid='"+rslSet.getString("sipId")+"'");
+		
+		sip.setMembers(new ArrayList<UserTuple>());
+		sip.setModerators(new ArrayList<UserTuple>());
+		while(rslSet1.next()){
+			UserTuple sipusr = (findUser(rslSet1.getString("memberId")));
+			if(sipusr.getId().equals(userId))
+				sip.setMember(true);
+			sip.getMembers().add(sipusr);
+			if(rslSet1.getString("moderator").equals("1"))
+			{
+				if(sipusr.getId().equals(userId))
+					sip.setModerator(true);
+				sip.getModerators().add(sipusr);
+			}
+		}
+		dbMgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+
 		return sip;
 	}
 	
