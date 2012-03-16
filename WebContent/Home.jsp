@@ -74,7 +74,9 @@
 	String postType = "requestId=wallpost&userid="+user;	
 	if (user != null) {
 		loggedInHmPg = new BuildHomePage(loggedInUser);
+		loggedInHmPg.setLoggedInUser(loggedInUser);
 		hmPg = new BuildHomePage(user);
+		hmPg.setLoggedInUser(loggedInUser);
 		profile = hmPg.buildPublicProfile();
 		usrTplLoggedIn = loggedInHmPg.buildUserHome();
 		usrTplCurUsr = hmPg.buildUserHome();
@@ -88,13 +90,13 @@
 		
 		else if(activeDiv.equals("frnAuthRequest"))
 		{
-			frnRequest = hmPg.buildFriendRequest();
+			frnRequest = loggedInHmPg.buildFriendRequest();
 			authUrl= "Login?requestId=acceptUser";
 		}
 
 		else if(activeDiv.equals("sipAuthRequest"))
 		{
-			sipReqs = hmPg.buildSipRequest();
+			sipReqs = loggedInHmPg.buildSipRequest();
 			authUrl= "Login?requestId=acceptSipUser";
 		}
 		
@@ -499,7 +501,7 @@
 
 
 
-			<div class="span10" id="authRequest" style="display: none">
+			<div class="span10" id="frnAuthRequest" style="display: none">
 				<table class="table table-striped">
 					<%
 						if(frnRequest!=null){
@@ -571,6 +573,14 @@
 						</td>
 						<td><%=post.getPostDate()%></td>
 						<td><%=post.getPostTime()%></td>
+						<% 
+							if(post.getModifiable())
+							{
+						%>
+						<td>
+						    <a class="close" href="Login?requestId=deletePost&postId=<%=post.getPostid()%>">&times;</a>
+						</td>
+						<%} %>
 					</tr>
 					<tr>
 						<td align="right">
@@ -613,6 +623,7 @@
 					%>
 					
 				</table>
+			
 			</div>
 			
 		</div>

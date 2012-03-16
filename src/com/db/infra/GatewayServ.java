@@ -57,6 +57,10 @@ public class GatewayServ extends HttpServlet {
 			handleLogOff(request,response);
 		else if(requestId.equals("wallpost"))
 			handleWallPost(request,response);
+		
+		else if(requestId.equals("deletePost"))
+			handlePostDelete(request,response);
+		
 		else if(requestId.equals("profileLd"))
 			handleProfileLoad(request,response);
 		else if(requestId.equals("commPost"))
@@ -93,6 +97,28 @@ public class GatewayServ extends HttpServlet {
 		// TODO Auto-generated method stub
 	}
 	
+	private void handlePostDelete(HttpServletRequest request,
+			HttpServletResponse response) {
+
+		String postId = request.getParameter("postId");
+		try {
+			dbmgr.executeQuery("delete from comment where POSTID='"+postId+"'");
+			dbmgr.executeQuery("delete from POST where postId='"+postId+"'");
+			dbmgr.disconnect();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "ok", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	private void handleSipRemoveUsr(HttpServletRequest request,
 			HttpServletResponse response) {
 		String userId = request.getParameter("sipRmUsrId");
@@ -456,9 +482,9 @@ public class GatewayServ extends HttpServlet {
 		String pageId = null;
 		String status=null;
 		try {
-			ResultSet rslSet = dbmgr.executeQuery("select pageId from userpage where userid='"+targetUsrId+"'");
+			ResultSet rslSet = dbmgr.executeQuery("select wallid from userinfo where id='"+targetUsrId+"'");
 			if(rslSet.next()){
-				pageId = rslSet.getString("pageid");
+				pageId = rslSet.getString("wallid");
 				long postId = getNextId("post","postid");
 				 dbmgr.executeQuery("insert into cseteam51.post " +
 						"values ('"+Long.toString(postId)+"','2012-10-11','17:00','EST','"+request.getParameter("wallpost")+"','"+userId+"','"+pageId+"')");

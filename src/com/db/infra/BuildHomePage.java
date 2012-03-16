@@ -14,6 +14,7 @@ import com.sun.org.apache.bcel.internal.generic.NEW;
 public class BuildHomePage {
 
 	private String userId;
+	private String loggedInUser;
 	private DBManager dbMgr = new DBManager();
 	
 	public BuildHomePage(String userId){
@@ -77,7 +78,10 @@ public class BuildHomePage {
 			String pageId = rslSet.getString("wallid");
 			rslSet = dbMgr.executeQuery("select * from post where pageid='"+pageId+"'");
 			while(rslSet.next()){
-				posts.add(buildPost(rslSet));
+				Posts post = buildPost(rslSet);
+				if(userId.equals(loggedInUser))
+					post.setModifiable(true);
+				posts.add(post);
 			}
 			dbMgr.disconnect();
 		} catch (SQLException e) {
@@ -314,7 +318,20 @@ public class BuildHomePage {
 		UserTuple usr = findUser(post.getAuthor());
 		post.setAuthorFname(usr.getFname());
 		post.setAuthorLname(usr.getLname());
+		/**
+		 * TODO need to change this logic
+		 */
+		if(post.getAuthor().equals(loggedInUser))
+			post.setModifiable(true);
+		else
+			post.setModifiable(false);
 		return post;
+	}
+	public void setLoggedInUser(String loggedInUser) {
+		this.loggedInUser = loggedInUser;
+	}
+	public String getLoggedInUser() {
+		return loggedInUser;
 	}
 
 }

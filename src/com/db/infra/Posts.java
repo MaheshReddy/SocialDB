@@ -10,6 +10,7 @@ public class Posts {
 	String pageid;
 	String authorFname;
 	String authorLname;
+	private Boolean modifiable;
 	
 	public Posts(){}
 
@@ -101,5 +102,15 @@ public class Posts {
 
 	public void setAuthorLname(String authorLname) {
 		this.authorLname = authorLname;
+	}
+
+
+	public void setModifiable(Boolean modifiable) {
+		this.modifiable = modifiable;
+	}
+
+
+	public Boolean getModifiable() {
+		return modifiable;
 	}
 }
