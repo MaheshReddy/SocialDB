@@ -53,7 +53,7 @@ public class GatewayServ extends HttpServlet {
 			handleLogin(request, response);
 		else if (requestId.equals("register"))
 			handleRegistration(response, request);
-		else if(requestId.equals("logoff"))
+		else if(requestId.equals("logout"))
 			handleLogOff(request,response);
 		else if(requestId.equals("wallpost"))
 			handleWallPost(request,response);
@@ -65,6 +65,8 @@ public class GatewayServ extends HttpServlet {
 			handleProfileLoad(request,response);
 		else if(requestId.equals("commPost"))
 			handleCommentPost(request,response);
+		else if(requestId.equals("deleteComment"))
+			handleDeleteComment(request,response);
 		else if(requestId.equals("addUser"))
 			handleUserAdd(request,response);
 		else if(requestId.equals("acceptUser"))
@@ -90,6 +92,7 @@ public class GatewayServ extends HttpServlet {
 			handleDeleteSip(request,response);
 		else if(requestId.equals("sipRmUsr"))
 			handleSipRemoveUsr(request,response);
+		
 		}catch (NullPointerException e) {
 			redirect(request, response, "Error", "Home.jsp");
 			// TODO: handle exception
@@ -97,6 +100,27 @@ public class GatewayServ extends HttpServlet {
 		// TODO Auto-generated method stub
 	}
 	
+	private void handleDeleteComment(HttpServletRequest request,
+			HttpServletResponse response) {
+
+		String commentId = request.getParameter("commentId");
+		try {
+			dbmgr.executeQuery("delete from comment where COMMENTID='"+commentId+"'");
+			dbmgr.disconnect();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "ok", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	private void handlePostDelete(HttpServletRequest request,
 			HttpServletResponse response) {
 
@@ -537,8 +561,7 @@ public class GatewayServ extends HttpServlet {
 		return userId;
 	}
 	private void handleLogOff(HttpServletRequest request,HttpServletResponse response){
-		
-		if(request.getParameter("isLoggedIn").equals("true")){
+		System.out.println("In Handle Logoff");
 			Cookie [] cookie = request.getCookies();
 			for(int i=0;i<cookie.length;i++){
 				if(cookie[i].getName().equals("userId")){
@@ -557,19 +580,7 @@ public class GatewayServ extends HttpServlet {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
-		else{
-			try {
-				redirect(request,response,"Log In","index.jsp");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ServletException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
+}
 	private void handleLogin(HttpServletRequest request,HttpServletResponse response) throws IOException
 	{
 		response.setContentType("text/html");

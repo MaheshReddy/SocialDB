@@ -5,12 +5,22 @@
 <html>
 
 
-<script type="text/javascript" src="js/bootstrap.js">
-    var externalScriptLoaded = false;
-</script> 
-<script type="text/javascript" src="js/bootstrap.min.js">
-    var externalScriptLoaded = false;
-</script> 
+<script type="text/javascript" src="js/bootstrap.js"></script> 
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/bootstrap-dropdown.js"></script>
+<script type="text/javascript" src="js/bootstrap-carousel.js"></script>
+<script type="text/javascript" src="js/bootstrap-popover.js"></script>
+<script type="text/javascript" src="js/bootstrap-transition.js"></script>
+<script type="text/javascript" src="js/application.js"></script>
+<script type="text/javascript" src="js/bootstrap-collapse.js"></script>
+<script type="text/javascript" src="js/bootstrap-scrollspy.js"></script>
+<script type="text/javascript" src="js/bootstrap-typeahead.js"></script>
+<script type="text/javascript" src="js/bootstrap-tab.js"></script>
+<script type="text/javascript" src="js/bootstrap-alert.js"></script>
+<script type="text/javascript" src="js/bootstrap-button.js"></script>
+<script type="text/javascript" src="js/bootstrap-modal.js"></script>
+<script type="text/javascript" src="js/bootstrap-tooltip.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
 <STYLE TYPE="text/css" MEDIA="screen, projection">
 <!--
   @import url(css/bootstrap.css);
@@ -134,7 +144,7 @@ function register(){
 <tr >
 <td align="left" width="1000000000"></td>
 <td> &nbsp;</td>
-<td align="justify"><button class="btn" id="logOffBtn" name="logOff" onclick="logAction()">LogOff</button></td>
+<td align="justify"></td>
 </tr>
 </table>
 </body>

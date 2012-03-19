@@ -106,6 +106,10 @@ public class BuildHomePage {
 				UserTuple usr = findUser(comment.getAuthor());
 				comment.setAuthorFname(usr.getFname());
 				comment.setAuthorLname(usr.getLname());
+				if(comment.getAuthor().equals(loggedInUser))
+					comment.setModifiable(true);
+				else
+					comment.setModifiable(false);
 				comments.add(comment);
 			}
 			dbMgr.disconnect();

@@ -70,7 +70,7 @@
 		if(request.getAttribute("activeDiv")!=null)
 			activeDiv = request.getAttribute("activeDiv").toString();
 	}
-	response.getWriter().println(activeDiv);
+	//response.getWriter().println(activeDiv);
 	String postType = "requestId=wallpost&userid="+user;	
 	if (user != null) {
 		loggedInHmPg = new BuildHomePage(loggedInUser);
@@ -169,6 +169,7 @@
 		var param = new Array();
 		param["requestId"]=action;
 		param["rmUserId"]=Id;
+		param['activeDiv'] = curLoaded;
 		post_to_url("Login", param, "post");
 	}
 	
@@ -177,6 +178,7 @@
 		param['requestId'] = action;
 		param['actUsrId'] = usrId;
 		param['actCrcId'] = cirId;
+		param['activeDiv'] = curLoaded;
 		post_to_url("Login", param, "post");
 	}
 	
@@ -184,6 +186,7 @@
 		var param = new Array();
 		param['requestId'] = action;
 		param['sipId'] = sipId;
+		param['activeDiv'] = curLoaded;
 		post_to_url("Login",param,"post");
 	}
 	
@@ -192,75 +195,44 @@
 		param['requestId'] = action;
 		param['sipId'] = sipId;
 		param['sipRmUsrId'] = userid;
-		post_to_url("Login",param,"post");
+		param['activeDiv'] = curLoaded;
+		post_to_url("Login?",param,"post");
 	}
 </script>
 
 <body onload="init()">
 
+    <div class="navbar">
+    <div class="navbar-inner">
+    <div class="container">
+    <ul class="nav">
+    <li class="active">
+    <a href="Home.jsp?activeDiv=home">Home</a>
+    </li>
+    <li><a href="Home.jsp?activeDiv=sipList">Sip</a></li>
+    <li><a href="Home.jsp?activeDiv=circles">Circles</a></li>
+    <li>
+    <a   href="Home.jsp?activeDiv=frnAuthRequest">Friend Requests</a>
+    </li>
+    <li><a href="Home.jsp?activeDiv=sipAuthRequest">SIP Requests</a></li>
+    <li><a href="Login?requestId=logout">Logout</a></li>
+    </ul>
+    </div>
+    </div>
+    </div>
 	<div class="container-fluid">
 		<div class="row-fluid">
 			<div class="span2">
 			
-			
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="friendsLink" href="javascript:toggle('friends');">Friends</a> --> 
-						<a id="friendsLink" href="Home.jsp?activeDiv=home">Home</a>
-					</div>
-				</div>
-			
-			
-				<div class="row-fluid">
-					<div class="span4">
-						<a id="home" href="Home.jsp?activeDiv=pubProfile">Profile</a>
-					</div>
-				</div>
+			<ul class="nav nav-pills nav-stacked">
+			<li><a href="Home.jsp?activeDiv=pubProfile&userId=<%=curUser%>">Profile</a></li>
+			<li>
+			<a id="friendsLink" href="Home.jsp?activeDiv=friends&userId=<%= user %>">Friends</a></li>
+			<li><a id="walllink" href="Home.jsp?activeDiv=wall&userId=<%= user %>">Wall</a></li>
+			<li>
+			</ul>
 
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="friendsLink" href="javascript:toggle('friends');">Friends</a> --> 
-						<a id="friendsLink" href="Home.jsp?activeDiv=friends&userId=<%= user %>">Friends</a>
-					</div>
-				</div>
 
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="walllink" href="javascript:toggle('wall');">Wall</a> -->
-						<a id="walllink" href="Home.jsp?activeDiv=wall&userId=<%= user %>">Wall</a>
-					</div>
-				</div>
-				
-				
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
-						<a id="sipListlink" href="Home.jsp?activeDiv=sipList">Sips</a>
-					</div>
-				</div>
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
-						<a id="sipListlink" href="Home.jsp?activeDiv=circles">Circles</a>
-					</div>
-				</div>
-				
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
-						<a id="frnReqLink" href="Home.jsp?activeDiv=frnAuthRequest">FriendRequests</a>
-					</div>
-				</div>
-				
-				<div class="row-fluid">
-					<div class="span2">
-						<!-- <a id="frdLink" href="javascript:ajaxpage('friendSearch.jsp','frdSearch');">FriendFinder</a> -->
-						<a id="sipAuthLink" href="Home.jsp?activeDiv=sipAuthRequest">SipRequests</a>
-					</div>
-				</div>
-				
-				
-			</div>
 			<div class="span10" id="frdSearch" style="display: none" align="justify">
 
 				<form class="well form-search" action="Home.jsp" method="post">
@@ -270,7 +242,7 @@
 					<button class="btn" type="submit">Search</button>
 				</form>
 			</div>
-
+</div>
 
 			<div class="span10" id="home" style="display: block" align="justify">
 
@@ -313,9 +285,7 @@
 						<td><%=frn.getFieldTwo()%></td>
 						<% if (curUser.equals(loggedInUser)){ %>
 						<td>
-						<select>
-						<option onclick="javaScript:frnAction('unfriend','<%=frn.getId()%>')">UnFriend</option>
-						</select>
+						<button class="btn btn-danger" onclick="javaScript:frnAction('unfriend','<%=frn.getId()%>')">UnFriend</button>
 						</td>
 						<%} %>
 					</tr>
@@ -386,9 +356,7 @@
 						</a></td>
 						<td><%=mem.getFieldTwo()%></td>
 						<td>
-						<select>
-						<option onclick="javascript:circleAction('removeFromCircle','<%=mem.getId()%>','<%=crc.getCircleId()%>')">Remove</option>
-						</select>
+						<button class="btn btn-danger" onclick="javascript:circleAction('removeFromCircle','<%=mem.getId()%>','<%=crc.getCircleId()%>')">Remove</button>
 						</td>
 					</tr>
 					<%
@@ -514,7 +482,7 @@
 							href="Login?requestId=profileLd&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
 						</a></td>
 						<td><%=usr.getEmail()%></td>
-						<td><a href="<%=authUrl%>&accpUserId=<%=usr.getId()%>">Accept</a></td>
+						<td><a href="<%=authUrl%>&activeDiv=<%=activeDiv%>&accpUserId=<%=usr.getId()%>">Accept</a></td>
 					</tr>
 					<%
 						}}
@@ -535,7 +503,7 @@
 							href="Login?requestId=profileLd&userId=<%=req.getUser().getId()%>"> <%=req.getUser().getFname() + " " + req.getUser().getLname()%>
 						</a></td>
 						<td><%=req.getUser().getEmail()%></td>
-						<td><a href="<%=authUrl%>&accpUserId=<%=req.getUser().getId()%>&sipId=<%=req.getSip().getSipId()%>">Accept</a></td>
+						<td><a href="<%=authUrl%>&activeDiv=<%=activeDiv%>&accpUserId=<%=req.getUser().getId()%>&sipId=<%=req.getSip().getSipId()%>">Accept</a></td>
 					</tr>
 					<%
 						}}
@@ -547,12 +515,13 @@
 
 
 			<div class="span10" id="wall" style="display: none">
-				<table class="table table-striped table-bordered table-condensed">
+				<table class="table   table-condensed">
 				<tr>
 						<td><form action="Login?<%=postType%>"
 								method="post">
 								<input name="wallpost" type="text" /> <input name="submit"
 									type="submit" value="post">
+								<input name="userId" type="hidden" value="<%=curUser%>"/>
 							</form>
 						</td>
 					</tr>
@@ -578,7 +547,7 @@
 							{
 						%>
 						<td>
-						    <a class="close" href="Login?requestId=deletePost&postId=<%=post.getPostid()%>">&times;</a>
+						    <a class="close" href="Login?requestId=deletePost&activeDiv=<%=activeDiv%>&postId=<%=post.getPostid()%>">&times;</a>
 						</td>
 						<%} %>
 					</tr>
@@ -602,6 +571,14 @@
 									</td>
 									<td><%=comm.getPostDate()%></td>
 									<td><%=comm.getPostTime()%></td>
+									<% 
+							if(comm.getModifiable())
+							{
+						%>
+						<td>
+						    <a class="close" href="Login?requestId=deleteComment&activeDiv=<%=activeDiv%>&commentId=<%=comm.getPostid()%>">&times;</a>
+						</td>
+						<%} %>
 								</tr>
 								<%
 									}

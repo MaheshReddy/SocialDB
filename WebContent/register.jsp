@@ -10,62 +10,6 @@
 <body>
  <br>
 
-<form action="Login?requestId=register" method=post>
 
-<table cellpadding=4 cellspacing=2 border=0>
-<font size=5>REGISTRATION</font>
-<br><font size=1><sup></sup></font><hr>
-</th>
-<tr ><td valign=top> 
-<b>First Name<sup>*</sup></b> 
-<br><input type="text" name="fname" value="" size=15 maxlength=20>
-</td><td  valign=top><b>Last Name<sup>*</sup></b>
-<br><input type="text" name="lname" value="" size=15 maxlength=20></td> <td><b>Sex<sup>*</sup></b><br><input type="text" name="sex" value="" size="3"></td>
-</tr>
-<tr>
-<td valign=top><b>E-Mail<sup>*</sup></b> 
-<br><input type="text" name="emailid" value="" size=25  
-maxlength=125><br></td>
-
-<td  valign=top>
-<b>DOB<sup>*</sup></b> <br>
-<input type="text" name="dob" value="yyyy-mm-dd" size=10 maxlength=10></td>
-</tr>
-
-<tr >
-<td valign=top><b>Password<sup>*</sup></b> 
-<br><input type="password" name="passwd" size=10 value=""  
-maxlength=10></td>
-
-<td  valign=top>
-<b>Confirm Password<sup>*</sup></b>
-<br><input type="password" name="passwd2" size=10 value=""  
-maxlength=10></td></tr>
-
-<tr > 
-<td valign=top><b>Address<sup>*</sup></b><br><input type="text" name="addr" size=30 value=""></td> </tr>
-<tr>
-<td  valign=top>
-<b>State:<sup>*</sup></b>
-<br><input type="text" name="state" size=10 value=""  
-maxlength=10></td>
-</tr>
-<tr >
-<td  valign=top>
-<b>City:<sup>*</sup></b>
-<br><input type="text" name="city" size=10 value=""  
-maxlength=10></td>
-<td valign=top><b>Zip Code:<sup>*</sup></b>
-<br><input type="text" name="zip" value="" size=10 ></td>
-</tr>
-
-<tr > 
-<td valign=top><b>Telephone<sup>*</sup></b><br><input type="text" name="tele" size=10 value=""></td>
-<td valign=top><b>Preferences<sup>*</sup></b><br><input type="text" name="pref" size=30 value=""></td>
- </tr>
- 
-<tr>
-<td  align=center colspan=2><hr>
-<input type="submit" value="Submit"></td></tr></table></center></form><p><font color = "#FF0000">* required fields</font></p>
 </body>
 </html>
