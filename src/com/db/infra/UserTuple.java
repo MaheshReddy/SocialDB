@@ -9,6 +9,7 @@ public class UserTuple implements Listable{
 		String fname;
 		String lname;
 		String email;
+		private String avatar;
 		public UserTuple(String id,String fname,String lname,String email){
 			this.id=id;
 			this.fname=fname;
@@ -58,5 +59,11 @@ public class UserTuple implements Listable{
 			actions.add("Accept");
 			actions.add("Remove");
 			return actions;
+		}
+		public void setAvatar(String avatar) {
+			this.avatar = avatar;
+		}
+		public String getAvatar() {
+			return avatar;
 		}
 }

@@ -1,3 +1,5 @@
+<%@page import="com.db.interfaces.SQLResult"%>
+<%@page import="com.db.infra.Message"%>
 <%@page import="com.db.infra.SipAuthRequest"%>
 <%@page import="com.db.infra.Circles"%>
 <%@page import="java.util.ArrayList"%>
@@ -28,24 +30,30 @@
 	String user = null;
 	String curUser = null;
 	String loggedInUser = null;
+	
+	String msgSubject="Subject";
+	String msgRecv="Receiver List";
+	
 	Map<String, String> profile = null;
 	
-	ArrayList<Listable> friends = null;
+	ArrayList<UserTuple> friends = null;
 	ArrayList<UserTuple> usrSearch = null;
 	ArrayList<UserTuple> frnRequest = null;
 	ArrayList<Posts> wall = null;
 	ArrayList<SIPEntry> sips = null;
 	ArrayList<Circles> circles = null;
-	ArrayList<Listable> cirAddList = null;
+	ArrayList<UserTuple> cirAddList = null;
+	ArrayList<Message> msgs  = null;
+	SQLResult rsl = null;
 	
 	ArrayList<SipAuthRequest> sipReqs = null;
 	
 	BuildHomePage hmPg = null;
 	BuildHomePage loggedInHmPg = null;
 	UserTuple usrTplLoggedIn = null;
-	UserTuple usrTplCurUsr = null;
+  	UserTuple usrTplCurUsr = null;
 	String authUrl=null;
-	String activeDiv = "pubProfile";
+	String activeDiv = "home";
 	Cookie[] cookies = request.getCookies();
 	
 	if (request.getAttribute("userId") != null)
@@ -118,7 +126,19 @@
 			circles = loggedInHmPg.buildCircles();
 			cirAddList = loggedInHmPg.buildFriends();
 		}
-
+		else if(activeDiv.equals("msgList"))
+			msgs = loggedInHmPg.buildMsgList();
+		else if(activeDiv.equals("msgCompose")){
+			if(request.getParameter("msgSub")!=null)
+			msgSubject = "Re:"+request.getParameter("msgSub");
+			if(request.getParameter("msgRecv")!=null)
+			msgRecv = request.getParameter("msgRecv");
+			
+		}
+		else if(activeDiv.equals("adminResult")){
+			 rsl = loggedInHmPg.buildAdminReport(request);
+			 activeDiv="adminResult";
+		}
 	} else {
 		response.sendRedirect("index.jsp");
 	}
@@ -202,85 +222,148 @@
 
 <body onload="init()">
 
-    <div class="navbar">
+    <div class="navbar ">
     <div class="navbar-inner">
-    <div class="container">
+    <div class="container-fluid">
+    <a class="brand" href="Home.jsp?Home">Social DB</a>
+    <div class="nav-collapse">
     <ul class="nav">
-    <li class="active">
-    <a href="Home.jsp?activeDiv=home">Home</a>
-    </li>
+    <li><a href="Home.jsp?activeDiv=msgList">Mail</a>
     <li><a href="Home.jsp?activeDiv=sipList">Sip</a></li>
     <li><a href="Home.jsp?activeDiv=circles">Circles</a></li>
     <li>
     <a   href="Home.jsp?activeDiv=frnAuthRequest">Friend Requests</a>
     </li>
     <li><a href="Home.jsp?activeDiv=sipAuthRequest">SIP Requests</a></li>
-    <li><a href="Login?requestId=logout">Logout</a></li>
+    <li><a href="Home.jsp?activeDiv=admin">Admin</a></li>
     </ul>
+    <p class="navbar-text pull-right"><a href="Login?requestId=logout">Logout</a></p>
+    </div>
     </div>
     </div>
     </div>
 	<div class="container-fluid">
 		<div class="row-fluid">
 			<div class="span2">
-			
-			<ul class="nav nav-pills nav-stacked">
+			 <div class="well sidebar-nav">
+			<ul class="nav nav-pills nav-stacked" >
 			<li><a href="Home.jsp?activeDiv=pubProfile&userId=<%=curUser%>">Profile</a></li>
 			<li>
 			<a id="friendsLink" href="Home.jsp?activeDiv=friends&userId=<%= user %>">Friends</a></li>
 			<li><a id="walllink" href="Home.jsp?activeDiv=wall&userId=<%= user %>">Wall</a></li>
-			<li>
+			<li><a>Ads</a></li>
 			</ul>
+			<ul class="thumbnails">
+					<li class="span2"><a href="Login?requestId=buyAd&item=33331" class="thumbnail"> <img
+							src="http://www.mbusa.com/vcm/MB/DigitalAssets/CurrentOffers/Redesign_UXP2/2012-C250-Sport-Sedan.jpg" alt=""> </a></li>
+							<li class="span2"><a href="Login?requestId=buyAd&item=33332" class="thumbnail"> <img
+							src="http://www.hillcity-comics.com/tshirts/Superman_symbol.jpg" alt=""> </a></li>
+							<li class="span2"><a href="#" class="thumbnail"> <img
+							src="https://netflix.hs.llnwd.net/e1/us/layout/headers/logos/nf_logo.png" alt=""> </a></li>
+							<li class="span2"><a href="#" class="thumbnail"> <img
+							src="https://www.google.com/images/srpr/logo3w.png" alt=""> </a></li>
+							<li class="span2"><a href="#" class="thumbnail"> <img
+							src="http://placehold.it/180x100" alt=""> </a></li>
+							<li class="span2"><a href="#" class="thumbnail"> <img
+							src="http://placehold.it/180x100" alt=""> </a></li>
+				</ul>
 
-
-			<div class="span10" id="frdSearch" style="display: none" align="justify">
-
-				<form class="well form-search" action="Home.jsp" method="post">
-					<input name="searchName" id="name" type="text" class="input-medium search-query"/>
-						<input name="activeDiv" type="hidden" value="usrSearch"/>
-						<input name="requestId" type="hidden" value="searchPpl"/>
-					<button class="btn" type="submit">Search</button>
-				</form>
 			</div>
-</div>
-
-			<div class="span10" id="home" style="display: block" align="justify">
-
-				<h3> Welcome <%= usrTplLoggedIn.getFname() + " "+usrTplLoggedIn.getLname() %>.
-				Showing profile of <%= usrTplCurUsr.getFname()+" "+usrTplCurUsr.getLname() %></h1>
 			</div>
-
-
 			
-			<div class="span10" id="pubProfile" style="display: none"
-				align="justify">
-				<!--Body content-->
+			<div class="span9" id="home" style="display: none" align="justify">
+				<div class="hero-unit">
+				<table>
+				<tr>
+				<td>
+				<ul class="thumbnails">
+					<li class="span3"><a href="#" class="thumbnail"> <img
+							src="<%=profile.get("avatar") %>" alt=""> </a></li>
+				</ul>
+				</td>
+				<td>
 				<table class="table table-striped">
 					<tr>
-						<td>Name<br> <%=profile.get("fname") + " " + profile.get("lname")%>
+						<td><%=profile.get("fname") +" "+ profile.get("lname")%>
 						</td>
-						<td>Sex:<br> <%=profile.get("sex")%></td>
-						<td>DOB:<br> <%=profile.get("dob")%></td>
+						</tr>
+						<tr>
+						<td>DOB:<%=profile.get("dob")%></td>
+						</tr>
+						<tr>
 						<td>Email:<br> <%=profile.get("email")%></td>
+						</tr>
+						<tr>
 						<td>Telephone:<br> <%=profile.get("tele")%></td>
+						</tr>
+						<tr>
 						<td>Address:<br> <%=profile.get("addr") + " " + profile.get("city") + " "
 					+ profile.get("state") + " " + profile.get("zip")%>
 						</td>
 					</tr>
 				</table>
+				</td>
+				</tr>
+				</table>
+			</div>
 			</div>
 
-			<div class="span10" id="friends" style="display: none">
+
+			
+			<div class="span9" id="pubProfile" style="display: none"
+				align="justify">
+				<!--Body content-->
+				<table>
+				<tr>
+				<td>
+				<ul class="thumbnails">
+					<li class="span3"><a href="#" class="thumbnail"> <img
+							src="<%=profile.get("avatar") %>" alt=""> </a></li>
+				</ul>
+				</td>
+				<td>
+				<table class="table table-striped">
+					<tr>
+						<td><%=profile.get("fname") +" "+ profile.get("lname")%>
+						</td>
+						</tr>
+						<tr>
+						<td>DOB:<%=profile.get("dob")%></td>
+						</tr>
+						<tr>
+						<td>Email:<br> <%=profile.get("email")%></td>
+						</tr>
+						<tr>
+						<td>Telephone:<br> <%=profile.get("tele")%></td>
+						</tr>
+						<tr>
+						<td>Address:<br> <%=profile.get("addr") + " " + profile.get("city") + " "
+					+ profile.get("state") + " " + profile.get("zip")%>
+						</td>
+					</tr>
+				</table>
+				</td>
+				</tr>
+				</table>
+			</div>
+
+			<div class="span9" id="friends" style="display: none">
 				<table class="table table-striped">
 					<%
 						if(friends!=null){
-						Iterator<Listable> frnItr = friends.iterator();
+						Iterator<UserTuple> frnItr = friends.iterator();
 						while (frnItr.hasNext()) {
-							Listable frn = frnItr.next();
+							UserTuple frn = frnItr.next();
 					%>
 					<tr>
+					<td>
+					<ul class="thumbnails">
+					<li class="span1"><a href="#" class="thumbnail"> <img
+							src="<%=frn.getAvatar()%>" alt=""> </a></li>
+				</ul>
+					</td>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=frn.getId()%>"> <%=frn.getFieldOne()%>
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=frn.getId()%>"> <%=frn.getFieldOne()%>
 						</a></td>
 						<td><%=frn.getFieldTwo()%></td>
 						<% if (curUser.equals(loggedInUser)){ %>
@@ -308,7 +391,71 @@
 
 
 
-			<div class="span10" id="circles" style="display: none">
+
+			<div class="span9" id="msgList" style="display: none">
+				<table class="table table-striped">
+				<tr>
+				<td><h3>Inbox</h3></td>
+				<td><a class="btn" href="Home.jsp?activeDiv=msgCompose">Compose</a></td>
+				</tr>
+					<%
+						if(msgs!=null){
+						Iterator<Message> msgItr = msgs.iterator();
+						while (msgItr.hasNext()) {
+							Message msg = msgItr.next();
+					%>
+					<tr>
+						<td><a
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=msg.getSender().getId()%>"> <%=msg.getSender().getFname()+" "+msg.getSender().getLname()%>
+						</a></td>
+						<td><%=msg.getSubject()%></td>
+						<td><%=msg.getDate() %></td>
+						<td>
+						<a class="btn" href="Home.jsp?activeDiv=msgCompose&msgSub=<%=msg.getSubject()%>&msgRecv=<%=msg.getSender().getEmail()%>">Reply</a>
+						</td>
+						<td>
+						<a class="close" href="Login?requestId=deleteMsg&msgId=<%=msg.getMsgId()%>&usrEmail=<%=loggedInHmPg.getUserTuple().getEmail()%>">&times;</a>
+						</td>
+					</tr>
+					<tr>
+					<td><%=msg.getContent() %></td>
+					</tr>
+					<%
+						}}
+					%>
+				</table>
+			</div>
+
+			<div class="span9" id="msgCompose" style="display:none">
+			<form class="well" action="Login" method="post">
+			<input name="requestId" value="composeMsg" type="hidden">
+			<input name="senderEmail" value="<%=loggedInHmPg.getUserTuple().getEmail() %>" type="hidden">
+			<table>
+			<tr>
+			<td>
+			 	<label>To:</label>
+			 	<input class="span3" type="text" name="receiverList" value="<%= msgRecv%>"/>
+			 	</tr>
+			 	<tr>
+			 	<td>
+			 	<label>Subject:</label>
+			 	<input type="text" name="subject" value="<%=msgSubject%>"/></td>
+			 	</tr>
+			 	<tr>
+			 	<td>
+			 	<label>Message:</label>
+			 	<input class="span4" type="text" class="input-xlarge" name= "content" /></td>
+			 	</tr>
+			 	<tr>
+			 	<td>
+			 	<input type="submit" value="send">
+			 	</td>
+			 	</tr>
+			 	</table> 
+			</form>
+			</div>
+
+			<div class="span9" id="circles" style="display: none">
 				<table class="table table-striped">
 				<tr>
 					<td> 
@@ -330,11 +477,11 @@
 					</td>
 					<td> Add:
 					<% if(cirAddList!=null){
-						Iterator<Listable> cirListIter = cirAddList.iterator();
+						Iterator<UserTuple> cirListIter = cirAddList.iterator();
 						%>
 						<select>
 						<% while(cirListIter.hasNext()){
-							Listable cirListUsr = cirListIter.next(); %>
+							UserTuple cirListUsr = cirListIter.next(); %>
 						
 						<option onclick="javascript:circleAction('addToCircle','<%=cirListUsr.getId()%>','<%=crc.getCircleId()%>')"><%=cirListUsr.getFieldOne()%></option>
 						
@@ -352,7 +499,7 @@
 					%>
 					<tr>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=mem.getId()%>"> <%=mem.getFieldOne()%>
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=mem.getId()%>"> <%=mem.getFieldOne()%>
 						</a></td>
 						<td><%=mem.getFieldTwo()%></td>
 						<td>
@@ -368,7 +515,7 @@
 
 
 
-			<div class="span10" id="sipList" style="display: none">
+			<div class="span9" id="sipList" style="display: none">
 				<table class="table table-striped">
 									<tr>
 						<td>
@@ -446,7 +593,7 @@
 
 
 
-			<div class="span10" id="usrSearch" style="display: none">
+			<div class="span9" id="usrSearch" style="display: none">
 				<table class="table table-striped">
 					<%
 						if(usrSearch!=null){
@@ -455,8 +602,14 @@
 							UserTuple usr = usrItr.next();
 					%>
 					<tr>
+					<td>
+					<ul class="thumbnails">
+					<li class="span1"><a href="#" class="thumbnail"> <img
+							src="<%=usr.getAvatar()%>" alt=""> </a></li>
+				</ul>
+				</td>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
 						</a></td>
 						<td><%=usr.getEmail()%></td>
 						<td><a href="Login?requestId=addUser&addUserId=<%=usr.getId()%>">Add</a></td>
@@ -469,7 +622,7 @@
 
 
 
-			<div class="span10" id="frnAuthRequest" style="display: none">
+			<div class="span9" id="frnAuthRequest" style="display: none">
 				<table class="table table-striped">
 					<%
 						if(frnRequest!=null){
@@ -479,7 +632,7 @@
 					%>
 					<tr>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=usr.getId()%>"> <%=usr.getFname() + " " + usr.getLname()%>
 						</a></td>
 						<td><%=usr.getEmail()%></td>
 						<td><a href="<%=authUrl%>&activeDiv=<%=activeDiv%>&accpUserId=<%=usr.getId()%>">Accept</a></td>
@@ -490,7 +643,7 @@
 				</table>
 			</div>
 
-			<div class="span10" id="sipAuthRequest" style="display: none">
+			<div class="span9" id="sipAuthRequest" style="display: none">
 				<table class="table table-striped">
 					<%
 						if(sipReqs!=null){
@@ -500,7 +653,7 @@
 					%>
 					<tr>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=req.getUser().getId()%>"> <%=req.getUser().getFname() + " " + req.getUser().getLname()%>
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=req.getUser().getId()%>"> <%=req.getUser().getFname() + " " + req.getUser().getLname()%>
 						</a></td>
 						<td><%=req.getUser().getEmail()%></td>
 						<td><a href="<%=authUrl%>&activeDiv=<%=activeDiv%>&accpUserId=<%=req.getUser().getId()%>&sipId=<%=req.getSip().getSipId()%>">Accept</a></td>
@@ -511,10 +664,100 @@
 				</table>
 			</div>
 
+			<div class="span9" id="adminResult" style="display: none">
+				<% if(rsl!=null){ 
+					ResultSet rslSet = rsl.getRslSet();
+					int cols = rsl.getCols();
+				%>
+				<table class="table table-bordered">
+					<% while(rslSet.next()){
+					%>
+					<tr>
+						<% for(int i=1;i<cols+1;i++){ %>
+						<td>
+						<%=rslSet.getString(i) %>
+						</td>
+						<%} %>
+					</tr>
+					
+					<%						
+					}
+					%>
+				
+				</table>
+				
+				<% rsl.getDbMgr().disconnect();} %>
+			</div>
+			
+		<div class="span9" id="admin" style="display: none">
+			<form class="well form-inline" action="Login?requestId=addAdv" method="post">
+			<input class="span2" type="text" name="advName" placeholder="AdvName">
+			<input class="span2" type="text" name="advComp" placeholder="Company">
+			<input class="span2" type="text" name="advPrice" placeholder="Price">
+			<input class="span2" placeholder="Units" type="text" name="advUnits">
+			<input class="btn" type="submit" value="CreateAd"> 
+			</form>
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="saleMonthlyRept">
+			<input class="span2" type="text" name="month" placeholder="Month">
+			<input class="span2" type="submit" value="GenerateReport">
+			</form>
+			
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="transList">
+			<input class="span2" type="text" name="name" placeholder="Item/User Name">
+			<label class="radio">Item<input name="transType" value="Item" type="radio"></label>
+			<label class="radio">User<input name="transType" value="User" type="radio"></label>
+			<input class="span2" type="submit" value="Transaction List">
+			</form>
+			
+			
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="revenueGen">
+			<input class="span2" type="text" name="name" placeholder="Item/ItemType/User Name">
+			<label class="radio">Item<input name="transType" value="Item" type="radio"></label>
+			<label class="radio">ItemType<input name="transType" value="ItemType" type="radio"></label>
+			<label class="radio">User<input name="transType" value="User" type="radio"></label>
+			<input class="span2" type="submit" value="Revenue">
+			</form>
+			
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="highestRev">
+			<label class="radio">Item<input name="transType" value="Item" type="radio"></label>
+			<label class="radio">User<input name="transType" value="User" type="radio"></label>
+			<input class="span2" type="submit" value="Highest Revenue">
+			</form>
+			
+
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="companyItemsSold">
+			<input class="span2" type="text" name="name" placeholder="companyName">
+			<input class="span2" type="submit" value="Items Sold">
+			</form>
+			
+	
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="getCustomers">
+			<input class="span2" type="text" name="name" placeholder="ItemName">
+			<input class="span2" type="submit" value="Get Customers">
+			</form>	
+			
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="customerMailingList">
+			<input class="span2" type="text" name="name" placeholder="ItemName">
+			<input class="span2" type="submit" value="Mailing List">
+			</form>	
+			
+			<form class="well form-inline" action="Home.jsp?activeDiv=adminResult" method="post">
+			<input type="hidden" name="action" value="itemSuggestions">
+			<input class="span2" type="text" name="name" placeholder="Customer Name">
+			<input class="span2" type="submit" value="Suggestions">
+			</form>	
+											
+		</div>
 
 
-
-			<div class="span10" id="wall" style="display: none">
+			<div class="span9" id="wall" style="display: none">
 				<table class="table   table-condensed">
 				<tr>
 						<td><form action="Login?<%=postType%>"
@@ -537,7 +780,7 @@
 					<tr>
 						<td><%=post.getContent()%></td>
 						<td><a
-							href="Login?requestId=profileLd&userId=<%=post.getAuthor()%>">
+							href="Home.jsp?activeDiv=pubProfile&userId=<%=post.getAuthor()%>">
 								<%=post.getAuthorFname() + "\t" + post.getAuthorLname()%></a>
 						</td>
 						<td><%=post.getPostDate()%></td>
@@ -565,7 +808,7 @@
 								<tr>
 								<td><%=comm.getContent()%></td>
 									<td><a
-										href="Login?requestId=profileLd&userId=<%=comm.getAuthor()%>">
+										href="Home.jsp?activeDiv=pubProfile&userId=<%=comm.getAuthor()%>">
 											<%=comm.getAuthorFname() + "\t"
 							+ comm.getAuthorLname()%></a>
 									</td>

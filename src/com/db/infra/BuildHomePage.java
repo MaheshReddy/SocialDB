@@ -6,31 +6,37 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.db.interfaces.Listable;
+import com.db.interfaces.SQLResult;
 import com.db.jdbc.DBManager;
 import com.sun.org.apache.bcel.internal.generic.NEW;
+import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion.User;
 
 
 public class BuildHomePage {
 
 	private String userId;
 	private String loggedInUser;
+	private UserTuple userTuple;
 	private DBManager dbMgr = new DBManager();
 	
 	public BuildHomePage(String userId){
 		this.userId = userId;
+		userTuple = findUser(userId);
 	}
 	public BuildHomePage(){}
 	
-	public ArrayList<Listable> buildFriends(){
+	public ArrayList<UserTuple> buildFriends(){
 		
-		ArrayList<Listable> friendList = new ArrayList<Listable>();;
+		ArrayList<UserTuple> friendList = new ArrayList<UserTuple>();;
 		try {
 			ResultSet rslSet = dbMgr.executeQuery("select usrid1 from friend where usrid2='"+userId+"'");
 			if(rslSet !=null)
 			{
 				while(rslSet.next()){
-					ResultSet rslSet1 = dbMgr.executeQuery("select id,fname,lname,emailid from userinfo where id='"+rslSet.getString("usrid1")+"'");
+					ResultSet rslSet1 = dbMgr.executeQuery("select id,fname,lname,emailid,avatar from userinfo where id='"+rslSet.getString("usrid1")+"'");
 					if(rslSet1.next())
 						//friendList.add(new UserTuple(rslSet1.getString("id"), rslSet1.getString("fname") , rslSet1.getString("lname"), rslSet1.getString("emailid")));
 						friendList.add(buildUserTuple(rslSet1));
@@ -61,6 +67,7 @@ public class BuildHomePage {
 				profile.put("tele",rstset.getString("telephone"));
 				profile.put("dob",rstset.getDate("dob").toString());
 				profile.put("email",rstset.getString("emailid"));
+				profile.put("avatar", rstset.getString("avatar"));
 			}
 			dbMgr.disconnect();
 		} catch (SQLException e) {
@@ -253,7 +260,120 @@ public class BuildHomePage {
 		return circles;
 		
 	}
+	public ArrayList<Message> buildMsgList(){
+		ArrayList<Message> msgList = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select MESGID from MSGRECIEVER where email='"+userTuple.getEmail()+"'");
+			msgList = new ArrayList<Message>();
+			while(rslSet.next())
+			{
+				Message msg = buildMessage(rslSet.getString("mesgId"));
+				if(msg!=null)
+					msgList.add(msg);
+			}
+			dbMgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return msgList;
+	}
 	
+	/**
+	 *TODO need to make it with and with out content. 
+	 * @return
+	 */
+	public Message buildMessage(String msgId){
+		Message msg = null;
+		try {
+			ResultSet rslSet = dbMgr.executeQuery("select * from MESSAGE where mesgId='"+msgId+"'");
+			if(rslSet.next()){
+			msg = new Message();
+			msg.setMsgId(msgId);
+			msg.setSender(findUser(rslSet.getString("sender")));
+			msg.setDate(rslSet.getString("MESGDATE"));
+			msg.setSubject(rslSet.getString("subject"));
+			msg.setContent(rslSet.getString("contents"));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return msg;
+	}
+	
+	
+	public SQLResult buildAdminReport(HttpServletRequest request){
+		String action = request.getParameter("action");
+		SaleQuery rsl = new SaleQuery();
+		rsl.setDbMgr(dbMgr);
+		if(action.equals("saleMonthlyRept"))
+			rsl.setQuery("select * from sale where saleDate > '2012-03-31' and saleDate < '2012-05-01'");
+		else if(action.equals("transList"))
+		{
+			String name = request.getParameter("name");
+			if(request.getParameter("transType").equals("Item"))
+			{
+				rsl.setQuery("select sale.transId,itemname,saledate,sale.noUnits,userinfo.Fname from ADVT,SALE,USERINFO"+ 
+							" where  sale.advtid = advt.advtid and " +
+							"sale.userid = userinfo.id and advt.itemname='"+name.toUpperCase()+"'");
+			}
+			else if(request.getParameter("transType").equals("User")){
+				rsl.setQuery("select sale.transId,itemname,saledate,sale.noUnits,userinfo.Fname from ADVT,SALE,USERINFO"+ 
+							" where  sale.advtid = advt.advtid " +
+							"and sale.userid = userinfo.id and userinfo.fname='"+name.toUpperCase()+"'");
+			}
+		}
+		else if(action.equals("revenueGen"))
+		{
+			String name = request.getParameter("name").toUpperCase();
+			String transType  = request.getParameter("transType");
+			if(transType.equals("ItemType"))
+				rsl.setQuery("select sum(unitPrice * sale.nounits),type from advt,sale" + 
+					" where advt.type ='"+ name+"' and advt.advtid = sale.advtid group by(type)");
+			if(transType.equals("Item"))
+				rsl.setQuery("select sum(unitPrice * sale.nounits),itemname from advt,sale"+ 
+				    " where advt.itemname = '"+name+"' and advt.advtid = sale.advtid group by(advt.itemname)");
+			if(transType.equals("User"))
+				rsl.setQuery("select sum(unitPrice * sale.nounits),Fname from advt,sale,USERINFO" +
+					" where sale.userid = userinfo.id and " +
+					"sale.advtid = advt.advtid and fname='"+name+"' group by(fname)");
+		}
+		else if(action.equals("highestRev")){
+			String transType = request.getParameter("transType");
+			if(transType.equals("Item"))
+				rsl.setQuery("with tlitemrevn  as(select sum(unitPrice * sale.nounits) as a1,itemname from advt,sale "+ 
+						" where sale.advtid = advt.advtid group by(itemname))"+
+						" select itemname,a1 from tlitemrevn where a1 in (select max(a1) from tlitemrevn)");
+			else if(transType.equals("User"))
+				rsl.setQuery("with tlusrrevn  as "+ 
+						" (select sum(unitPrice * sale.nounits) as a1,Fname from advt,sale,USERINFO "+ 
+						" where sale.userid = userinfo.id and sale.advtid = advt.advtid group by(fname)) "+
+				        " select fname,a1 from tlusrrevn where a1 in (select max(a1) from tlusrrevn)");
+		}
+		else if(action.equals("companyItemsSold")){
+			String name = request.getParameter("name").toUpperCase();
+			rsl.setQuery("select company,sale.nounits,itemname from sale,advt where sale.advtid=advt.advtid " +
+					"and company='"+name+"' order by(sale.nounits) desc");
+		}
+		else if(action.equals("getCustomers")){
+			String name = request.getParameter("name").toUpperCase();
+			rsl.setQuery("select Fname from userinfo,sale,advt where advt.itemname='"+name+"'" +
+					" and advt.advtid = sale.advtid and sale.userid = userinfo.id");
+		}
+		else if(action.equals("customerMailingList")){
+			String name = request.getParameter("name").toUpperCase();
+			rsl.setQuery("select userinfo.emailId from USERINFO,sale,advt " +
+					"where advt.advtid = sale.advtid and sale.userid = id and ADVT.itemname='"+name+"'");
+		}
+		else if(action.equals("itemSuggestions")){
+			String name = request.getParameter("name").toUpperCase();
+			rsl.setQuery("select advt.itemname,advt.type,advt.company,advt.unitprice from advt " +
+					"where type in (select advt.type from USERINFO,sale,advt" +
+					" where advt.advtid = sale.advtid and sale.userid = id and USERINFO.fname='"+name+"')");
+		}
+		return rsl;
+	}
 	public SIPEntry buildSIPEntry(ResultSet rslSet) {
 		SIPEntry sip = new SIPEntry();
 		try {
@@ -294,12 +414,13 @@ public class BuildHomePage {
 		usr.setLname(rslSet.getString("lname"));
 		usr.setEmail(rslSet.getString("emailid"));
 		usr.setId(rslSet.getString("id"));
+		usr.setAvatar(rslSet.getString("avatar"));
 		return usr;
 	}
 	public UserTuple findUser(String userId){
 		UserTuple usr =null;
 		try {
-			ResultSet rslSet = dbMgr.executeQuery("select fname,lname,emailId,id from userinfo where id='"+userId+"'");
+			ResultSet rslSet = dbMgr.executeQuery("select fname,lname,emailId,id,avatar from userinfo where id='"+userId+"'");
 			rslSet.next();
 			usr = buildUserTuple(rslSet);
 			dbMgr.disconnect();
@@ -336,6 +457,12 @@ public class BuildHomePage {
 	}
 	public String getLoggedInUser() {
 		return loggedInUser;
+	}
+	public UserTuple getUserTuple() {
+		return userTuple;
+	}
+	public void setUserTuple(UserTuple userTuple) {
+		this.userTuple = userTuple;
 	}
 
 }

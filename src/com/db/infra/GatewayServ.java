@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
@@ -51,6 +53,10 @@ public class GatewayServ extends HttpServlet {
 		try{
 		if(requestId.equals("login"))
 			handleLogin(request, response);
+		
+		else if(requestId.equals("composeMsg"))
+			handleComposeMsg(request,response);
+		
 		else if (requestId.equals("register"))
 			handleRegistration(response, request);
 		else if(requestId.equals("logout"))
@@ -93,13 +99,118 @@ public class GatewayServ extends HttpServlet {
 		else if(requestId.equals("sipRmUsr"))
 			handleSipRemoveUsr(request,response);
 		
+		else if(requestId.equals("deleteMsg"))
+			handleMsgDelete(request,response);
+		
+		else if(requestId.equals("buyAd"))
+			handleBuyAd(request,response);
+		
 		}catch (NullPointerException e) {
+			e.printStackTrace();
 			redirect(request, response, "Error", "Home.jsp");
 			// TODO: handle exception
 		}
 		// TODO Auto-generated method stub
 	}
 	
+	private void handleBuyAd(HttpServletRequest request,
+			HttpServletResponse response) {
+		String itemId = request.getParameter("item");
+		String userId = getCurrentUser(request);
+		long saleId = getNextId("sale", "TRANSID");
+		Calendar cal = Calendar.getInstance();
+		String date = cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DATE);
+		try {
+			dbmgr.executeQuery("insert into cseteam51.sale" +
+					" values ('"+saleId+"','"+date+"','"+itemId+"','1','"+userId+"')");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "OK", "Home.jsp");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void handleMsgDelete(HttpServletRequest request,
+			HttpServletResponse response) {
+		
+		String msgId = request.getParameter("msgId");
+		String email = request.getParameter("usrEmail");
+		
+		try {
+			dbmgr.executeQuery("delete from MSGRECIEVER where MESGID='"+msgId+"' and email='"+email+"'");
+			dbmgr.disconnect();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "OK", "Home.jsp?activeDiv=msgList");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ServletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	private void handleComposeMsg(HttpServletRequest request,
+			HttpServletResponse response) {
+		
+		String msgSub = request.getParameter("subject");
+		String msgContent = request.getParameter("content");
+		String[] recvList = request.getParameter("receiverList").split(";");
+		String senderEmail = request.getParameter("senderEmail");
+		System.out.println("In compose msg handler:"+msgSub+":"+msgContent);
+		long msgId = getNextId("message", "mesgId");
+		Calendar cal = Calendar.getInstance();
+		String date = cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DATE);
+		String time;
+		if(cal.get(Calendar.MINUTE)<10)
+		 time = cal.get(Calendar.HOUR_OF_DAY)+":0"+ cal.get(Calendar.MINUTE);
+		else
+			 time = cal.get(Calendar.HOUR_OF_DAY)+":"+ cal.get(Calendar.MINUTE);
+		
+		try {
+			dbmgr.executeQuery("insert into MESSAGE values ('"
+					+msgId+"','"
+					+date+"','"
+					+msgSub+"','"
+					+msgContent+"','"
+					+getCurrentUser(request)+"')"
+					);
+			for(int i=0;i<recvList.length;i++){
+				dbmgr.executeQuery("insert into MSGRECIEVER values ('"+
+						msgId+"','"
+						+recvList[i]+"')");
+			}
+			dbmgr.executeQuery("insert into MSGRECIEVER values ('"+
+					msgId+"','"
+					+ senderEmail+"')");
+		dbmgr.disconnect();	
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		try {
+			redirect(request, response, "OK", "Home.jsp?activeDiv=msgList");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ServletException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
+
 	private void handleDeleteComment(HttpServletRequest request,
 			HttpServletResponse response) {
 
@@ -380,9 +491,16 @@ public class GatewayServ extends HttpServlet {
 		String sipId = request.getParameter("sipPageId");
 		long postId = getNextId("post", "postid");
 		String curUsrId = getCurrentUser(request);
+		Calendar cal = Calendar.getInstance();
+		String date = cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DATE);
+		String time;
+		if(cal.get(Calendar.MINUTE)<10)
+		 time = cal.get(Calendar.HOUR_OF_DAY)+":0"+ cal.get(Calendar.MINUTE);
+		else
+			 time = cal.get(Calendar.HOUR_OF_DAY)+":"+ cal.get(Calendar.MINUTE);
 		try {
 			dbmgr.executeQuery("insert into cseteam51.post " +
-					"values ('"+Long.toString(postId)+"','2012-10-11','17:00','EST','"+request.getParameter("wallpost")+"','"+curUsrId+"','"+sipId+"')");
+					"values ('"+Long.toString(postId)+"','"+date+"','"+time+"','EST','"+request.getParameter("wallpost")+"','"+curUsrId+"','"+sipId+"')");
 			dbmgr.disconnect();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -462,9 +580,16 @@ public class GatewayServ extends HttpServlet {
 		String postId = request.getParameter("postId");
 		Long commId = getNextId("comment", "commentId");
 		String status = null;
+		Calendar cal = Calendar.getInstance();
+		String date = cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DATE);
+		String time;
+		if(cal.get(Calendar.MINUTE)<10)
+		 time = cal.get(Calendar.HOUR_OF_DAY)+":0"+ cal.get(Calendar.MINUTE);
+		else
+			 time = cal.get(Calendar.HOUR_OF_DAY)+":"+ cal.get(Calendar.MINUTE);
 		try {
 			dbmgr.executeQuery("insert into cseteam51.comment " +
-					"values ('"+commId+"','2012-10-10','17:01','EST','"+request.getParameter("commPost")
+					"values ('"+commId+"','"+date+"','"+time+"','EST','"+request.getParameter("commPost")
 					+"','"+userId+"','"+postId+"')");
 			status = "OK";
 			dbmgr.disconnect();
@@ -505,13 +630,20 @@ public class GatewayServ extends HttpServlet {
 		System.out.println(targetUsrId);
 		String pageId = null;
 		String status=null;
+		Calendar cal = Calendar.getInstance();
+		String date = cal.get(Calendar.YEAR)+"-"+cal.get(Calendar.MONTH)+"-"+cal.get(Calendar.DATE);
+		String time;
+		if(cal.get(Calendar.MINUTE)<10)
+		 time = cal.get(Calendar.HOUR_OF_DAY)+":0"+ cal.get(Calendar.MINUTE);
+		else
+			 time = cal.get(Calendar.HOUR_OF_DAY)+":"+ cal.get(Calendar.MINUTE);
 		try {
 			ResultSet rslSet = dbmgr.executeQuery("select wallid from userinfo where id='"+targetUsrId+"'");
 			if(rslSet.next()){
 				pageId = rslSet.getString("wallid");
 				long postId = getNextId("post","postid");
 				 dbmgr.executeQuery("insert into cseteam51.post " +
-						"values ('"+Long.toString(postId)+"','2012-10-11','17:00','EST','"+request.getParameter("wallpost")+"','"+userId+"','"+pageId+"')");
+						"values ('"+Long.toString(postId)+"','"+date+"','"+time+"','EST','"+request.getParameter("wallpost")+"','"+userId+"','"+pageId+"')");
 				status="OK";
 				dbmgr.disconnect();
 			}
@@ -536,6 +668,7 @@ public class GatewayServ extends HttpServlet {
 	
 	private long getNextId(String table,String columm){
 		String nextId = null;
+		System.out.println("in getNext id");
 		try {
 			ResultSet rslSet = dbmgr.executeQuery("select max("+columm+") from "+table);
 			if(rslSet.next())
